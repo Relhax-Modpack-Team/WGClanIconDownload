@@ -97,6 +97,11 @@ namespace WGClanIconDownload
         public int currentPage { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int countIconDownload { get; set; } = 0;
         public int dlErrorCounter { get; set; } = 0;
+        /// <summary>
+        /// storing the amount of created Icon download threads
+        /// the "regionHandleWorker_DoWork" will increase the value, "downloadThreadHandler_RunWorkerCompleted" will reduce it 
+        /// </summary>
+        public int dlIconsThreads { get; set; } = 0;
         public string url { get; set; } = null;
         public string storagePath { get; set; } = null;
         public List<clanData> clans = new List<clanData>();
@@ -114,6 +119,14 @@ namespace WGClanIconDownload
         public string region { get; set; } = null;
         public int indexOfDataArray { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int apiRequestWorkerThread { get; set; } = Constants.INVALID_HANDLE_VALUE;
-        // public AwesomeWebClient lastWebClient { get; set; } = null;
+        public AwesomeWebClient WebClient { get; set; } = new AwesomeWebClient();
+    }
+
+    public class downloadThreadArgsParameter
+    {
+        public string region { get; set; } = null;
+        public int indexOfDataArray { get; set; } = Constants.INVALID_HANDLE_VALUE;
+        public int dlIconThreadID { get; set; } = Constants.INVALID_HANDLE_VALUE;
+        public List<clanData> downloadList = new List<clanData>();
     }
 }

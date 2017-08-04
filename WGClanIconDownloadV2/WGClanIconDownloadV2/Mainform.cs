@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace WGClanIconDownload
@@ -17,6 +18,9 @@ namespace WGClanIconDownload
     {
         private List<ProgressBar> progressBar = new List<ProgressBar>() { };
         public List<ClassDataArray> dataArray = new List<ClassDataArray>() { };
+        public BackgroundWorker UiUpdateWorker;
+        public BackgroundWorker regionHandleWorker;
+        public BackgroundWorker downloadThreadHandler;
 
         public Mainform()
         {
@@ -51,14 +55,13 @@ namespace WGClanIconDownload
                 {
                     if (checkedListBoxRegion.GetItemCheckState(i) == CheckState.Checked)
                     {
-                        ProgressBar pB = new System.Windows.Forms.ProgressBar();
-                        pB.Location = new System.Drawing.Point(24, 145+p*30);
-                        pB.Name = "progressBar"+p;
-                        pB.Size = new System.Drawing.Size(219, 19);
-                        // this.progressBar[p].TabIndex = 3;
-                        this.progressBar.Add(pB);
-                        this.SuspendLayout();
-                        p++;
+                        // ProgressBar pB = new System.Windows.Forms.ProgressBar();
+                        // pB.Location = new System.Drawing.Point(24, 145+p*30);
+                        // pB.Size = new System.Drawing.Size(219, 19);
+                        // pB.Visible = true;
+                        // this.progressBar.Add(pB);
+                        // progressBar[p].CreateGraphics().DrawString(progressBar[p].Value.ToString() + "%", new Font("Arial", (float)8.25), Brushes.Black, 100, 5);
+                        // p++;
 
                         //Change the status of the buttons on the UI accordingly
                         //The start button is disabled as soon as the background operation is started
@@ -69,6 +72,7 @@ namespace WGClanIconDownload
                         /// Create a background worker thread that ReportsProgress &
                         /// SupportsCancellation
                         /// Hook up the appropriate events.
+                        EventArgsParameter pushParameters = new EventArgsParameter();
                         for (int x = 0; x < 2; x++)
                         {
                             // Do selected stuff
@@ -79,29 +83,115 @@ namespace WGClanIconDownload
                             parameters.apiRequestWorkerThread = x;
                             dataArray[parameters.indexOfDataArray].currentPage = 1;
                             apiRequestWorker_start(sender, parameters);
+                            pushParameters = parameters;
                             Utils.appendLog("apiRequest RunWorkerAsync thread region: " + parameters.region + " thread: " + x + " started");
                         }
+                        pushParameters.apiRequestWorkerThread = Constants.INVALID_HANDLE_VALUE;
+                        regionHandleWorker_initializeStart(sender, pushParameters);
                     }
+
                 }
-                /*
-                try
-                {
-                    downloadThreadHandler = new BackgroundWorker();
-                    downloadThreadHandler.DoWork += downloadThreadHandler_DoWork;
-                    // downloadThreadHandler.ProgressChanged += downloadThreadHandler_ProgressChanged;
-                    downloadThreadHandler.WorkerReportsProgress = false;
-                    downloadThreadHandler.RunWorkerCompleted += downloadThreadHandler_RunWorkerCompleted;
-                    downloadThreadHandler.RunWorkerAsync();
-                }
-                catch (Exception ee)
-                {
-                    Utils.exceptionLog(ee);
-                }
-                */
+                UiUpdateWorker = new BackgroundWorker();
+                UiUpdateWorker.DoWork += new DoWorkEventHandler(UiUpdateWorker_DoWork);
+                UiUpdateWorker.ProgressChanged += new ProgressChangedEventHandler(UiUpdateWorker_ProgressChanged);
+                UiUpdateWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(UiUpdateWorker_RunWorkerCompleted);
+                UiUpdateWorker.WorkerReportsProgress = true;
+                UiUpdateWorker.WorkerSupportsCancellation = true;
+                UiUpdateWorker.RunWorkerAsync();
             }
             else
             {
                 Utils.appendLog("no selection, no work ;-)");
+            }
+        }
+
+        void regionHandleWorker_initializeStart(object sender, EventArgsParameter parameters)
+        {
+            Thread.Sleep(3000);
+            regionHandleWorker_Start(sender, parameters);
+        }
+
+        void regionHandleWorker_Start(object sender, EventArgsParameter parameters)
+        {
+            regionHandleWorker = new BackgroundWorker();
+            regionHandleWorker.DoWork += new DoWorkEventHandler(regionHandleWorker_DoWork);
+            regionHandleWorker.ProgressChanged += new ProgressChangedEventHandler(regionHandleWorker_ProgressChanged);
+            regionHandleWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(regionHandleWorker_RunWorkerCompleted);
+            regionHandleWorker.WorkerReportsProgress = true;
+            regionHandleWorker.WorkerSupportsCancellation = true;
+            regionHandleWorker.RunWorkerAsync(parameters);
+        }
+
+        void regionHandleWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
+            while (dataArray[parameters.indexOfDataArray].clans.Count >0)
+            {
+                bool setNewDownloadEvent = false;
+                int Range = 20;
+                lock (dataArray)
+                {
+                    if (dataArray[parameters.indexOfDataArray].dlIconsThreads <  Settings.viaUiThreadsAllowed)
+                    {
+                        parameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
+                        parameters.dlIconThreadID++;
+                        setNewDownloadEvent = true;
+                        if (dataArray[parameters.indexOfDataArray].clans.Count < Range) { Range = dataArray[parameters.indexOfDataArray].clans.Count; }
+                        parameters.downloadList.AddRange((dataArray[parameters.indexOfDataArray].clans.GetRange(0, Range)));
+                        dataArray[parameters.indexOfDataArray].clans.RemoveRange(0, Range);
+                    }
+                }
+                if (setNewDownloadEvent)
+                {
+                    downloadThreadHandler_DoWork(sender, parameters);
+                    setNewDownloadEvent = false;
+                };
+                Thread.Sleep(200);
+            }
+        }
+
+        void regionHandleWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+        }
+
+        void regionHandleWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+        }
+
+        void UiUpdateWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+        }
+
+        void UiUpdateWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+        }
+
+        void UiUpdateWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+        }
+
+        void downloadThreadHandler_DoWork(object sender, downloadThreadArgsParameter parameters)
+        {
+            // downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
+            string filename = Path.Combine(Settings.baseStorageFolder, @"" + string.Format(dataArray[parameters.indexOfDataArray].storagePath + @"{0}.png", parameters.downloadList[0].tag));
+            AwesomeWebClient webClient = new AwesomeWebClient();
+            webClient.DownloadFileCompleted += new AsyncCompletedEventHandler(downloadThreadHandler_DownloadFileCompleted);
+            webClient.DownloadFileAsync(new Uri(parameters.downloadList[0].emblems), filename, parameters);
+        }
+
+        void downloadThreadHandler_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
+        {
+            downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.UserState;
+            parameters.downloadList.RemoveAt(0);
+            lock ( dataArray)
+            {
+                dataArray[parameters.indexOfDataArray].countIconDownload++;
+            }
+            if (parameters.downloadList.Count > 0) {downloadThreadHandler_DoWork(sender, parameters); return; };
+            // reducing ammount at threads at IconDownload .... no new downlaodThread creation
+            lock (dataArray)
+            {
+                dataArray[parameters.indexOfDataArray].dlIconsThreads--;
             }
         }
 
@@ -111,7 +201,7 @@ namespace WGClanIconDownload
             apiRequestWorker.DoWork += new DoWorkEventHandler(apiRequestWorker_DoWork);
             apiRequestWorker.ProgressChanged += new ProgressChangedEventHandler(apiRequestWorker_ProgressChanged);
             apiRequestWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(apiRequestWorker_RunWorkerCompleted);
-            apiRequestWorker.WorkerReportsProgress = true;
+            apiRequestWorker.WorkerReportsProgress = false;
             apiRequestWorker.WorkerSupportsCancellation = true;
             apiRequestWorker.RunWorkerAsync(parameters);
         }
@@ -128,8 +218,7 @@ namespace WGClanIconDownload
             var region = parameters.region;
             var indexOfDataArray = parameters.indexOfDataArray;
             var apiRequestWorkerThread = parameters.apiRequestWorkerThread;
-            e.Result = (EventArgsParameter)e.Argument;
-
+            
             int currentPage = 0;
             lock (dataArray)
             {
@@ -139,12 +228,13 @@ namespace WGClanIconDownload
             string url = string.Format(Settings.wgApiURL, dataArray[indexOfDataArray].url, Settings.wgAppID, Constants.limitApiPageRequest, currentPage);
             Utils.appendLog("Info: region: " + region + " thread: "+ apiRequestWorkerThread + " page: " + currentPage);
 
-
             //Handle the event for download complete
-            AwesomeWebClient WebClient = new AwesomeWebClient();
-            WebClient.DownloadDataCompleted += apiRequestWorker_DownloadDataCompleted;
+            parameters.WebClient = new AwesomeWebClient();
+            parameters.WebClient.DownloadDataCompleted += apiRequestWorker_DownloadDataCompleted;
+            // push any new information to the next working step
+            e.Result = parameters;
             //Start downloading file
-            WebClient.DownloadDataAsync(new Uri(url), parameters);
+            parameters.WebClient.DownloadDataAsync(new Uri(url), parameters);
         }
 
         void apiRequestWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -161,6 +251,7 @@ namespace WGClanIconDownload
                 EventArgsParameter parameters = (EventArgsParameter)e.UserState;       // the 'argument' parameter resurfaces here
                 // string region = parameters.region;
                 int indexOfDataArray = parameters.indexOfDataArray;
+                parameters.WebClient.DownloadDataCompleted -= apiRequestWorker_DownloadDataCompleted;
 
                 if (e.Error != null)
                 {
@@ -229,7 +320,7 @@ namespace WGClanIconDownload
                 }
                 else
                 {
-                    Utils.appendLog("all fine");
+                    // Utils.appendLog("all fine");
                 }
             }
             catch (Exception el)

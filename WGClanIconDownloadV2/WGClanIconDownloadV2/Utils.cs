@@ -70,7 +70,15 @@ namespace WGClanIconDownload
         /// <param e=Exception>the exception object that would be catched</param>
         public static void exceptionLog(Exception e)
         {
-            Utils.appendLog("EXCEPTION (call stack traceback):");
+            exceptionLog("", e);
+        }
+
+        public static void exceptionLog(string name, Exception e)
+        {
+            if (name.Equals(""))
+                Utils.appendLog("EXCEPTION (call stack traceback):");
+            else
+                Utils.appendLog(string.Format("EXCEPTION (call stack traceback):\nMarker: {0}", name));
             try { Utils.appendLog(e.StackTrace); } catch { };
             try { Utils.appendLog("message: " + e.Message); } catch { };
             try { Utils.appendLog("source: " + e.Source); } catch { };
@@ -80,10 +88,10 @@ namespace WGClanIconDownload
         }
     }
 
-    /// <summary>
-    /// http://www.mycsharp.de/wbb2/thread.php?threadid=62769
-    /// </summary>
-    public class UnlinkedBitmap
+        /// <summary>
+        /// http://www.mycsharp.de/wbb2/thread.php?threadid=62769
+        /// </summary>
+        public class UnlinkedBitmap
     {
         // private MemoryStream memstream;
         // private Bitmap bmp;
@@ -108,7 +116,7 @@ namespace WGClanIconDownload
     /// <summary>
     /// https://stackoverflow.com/questions/866350/how-can-i-programmatically-remove-the-2-connection-limit-in-webclient
     /// </summary>
-    class AwesomeWebClient : WebClient
+    public class AwesomeWebClient : WebClient
     {
         protected override WebRequest GetWebRequest(Uri address)
         {
