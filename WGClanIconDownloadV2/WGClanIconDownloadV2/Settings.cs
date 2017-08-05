@@ -123,6 +123,8 @@ namespace WGClanIconDownload
     {
         public const int limitApiPageRequest = 100;
         public const int INVALID_HANDLE_VALUE = -1;
+
+        public const UInt32 ERROR_SHARING_VIOLATION = 0x80070020;               /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
     }
 
     public class EventArgsParameter
@@ -138,7 +140,7 @@ namespace WGClanIconDownload
         public string region { get; set; } = null;
         public int indexOfDataArray { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int dlIconThreadID { get; set; } = Constants.INVALID_HANDLE_VALUE;
-        public string timeStamp { get; set; } = null;
+        public int fileDlErrorCounter { get; set; } = 0;
         public List<clanData> downloadList = new List<clanData>();
         // [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
         public void Dispose()  // Follow the Dispose pattern - public nonvirtual.

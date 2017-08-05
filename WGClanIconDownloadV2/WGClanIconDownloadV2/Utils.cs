@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -88,12 +90,81 @@ namespace WGClanIconDownload
             try { appendLog(msg); } catch { };
             try { if (e.Data != null) Utils.dumpObjectToLog("Data", e.Data); } catch { };             /// https://msdn.microsoft.com/de-de/library/system.exception.data(v=vs.110).aspx
         }
+
+        static HttpStatusCode GetHttpStatusCode(System.Exception err)              /// https://stackoverflow.com/questions/16387904/how-to-catch-404-webexception-for-webclient-downloadfileasync
+        {
+            if (err is WebException)
+            {
+                WebException we = (WebException)err;
+                if (we.Response is HttpWebResponse)
+                {
+                    HttpWebResponse response = (HttpWebResponse)we.Response;
+                    return response.StatusCode;
+                }
+            }
+            return 0;
+        }
+
+        public static string IntToHex(int i)                    /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
+        {
+            return i.ToString("X");
+        }
+
+        public static Int32 HexToInt(string s)                  /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
+        {
+            return int.Parse(s, System.Globalization.NumberStyles.HexNumber);
+        }
+
+        public static string GetIOException(System.Exception err)
+        {
+            string result = "";
+            if (err.GetBaseException() is IOException)
+            {
+                IOException ioe = (IOException)err.GetBaseException();
+                string hexValue = ioe.HResult.ToString("X");
+                Utils.appendLog("IO Error HResult: " + hexValue);
+                // IOException ioe = (IOException)err;
+                result = "io error";
+                return result;
+            }
+            else if (err is WebException)
+            {
+                WebException we = (WebException)err;
+                if (we.InnerException is System.IO.IOException)
+                {
+
+                    IOException ioe = (IOException)we.InnerException;
+                    Utils.appendLog("ioe.Message: " + ioe.Message);
+                    Utils.appendLog("ioe.GetBaseException: " + ioe.GetBaseException());
+                    Utils.appendLog("ioe.GetBaseException.ToString(): " + ioe.GetBaseException().ToString());
+                    return ioe.ToString();
+                }
+                else
+                {
+                    Utils.appendLog("WebException:" + ((HttpWebResponse)we.Response).StatusCode);
+                }
+                // result = GetHttpStatusCode(err).ToString();
+                return result;
+            }
+            else if (err is Exception)
+            {
+                result = "Exception";
+                return result;
+            }
+            return result;
+        }
+
+        public IList createList(Type myType)               //  https://stackoverflow.com/questions/2493215/create-list-of-variable-type
+        {
+            Type genericListType = typeof(List<>).MakeGenericType(myType);
+            return (IList)Activator.CreateInstance(genericListType);
+        }
     }
 
-        /// <summary>
-        /// http://www.mycsharp.de/wbb2/thread.php?threadid=62769
-        /// </summary>
-        public class UnlinkedBitmap
+    /// <summary>
+    /// http://www.mycsharp.de/wbb2/thread.php?threadid=62769
+    /// </summary>
+    public class UnlinkedBitmap
     {
         // private MemoryStream memstream;
         // private Bitmap bmp;

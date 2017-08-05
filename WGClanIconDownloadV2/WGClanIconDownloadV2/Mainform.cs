@@ -97,7 +97,6 @@ namespace WGClanIconDownload
                             // parameters.indexOfDataArray = p.indexOfDataArray;
                             regionHandleWorker_initializeStart(sender, pushParameters);
                         }
-
                     }
                     UiUpdateWorker = new BackgroundWorker();
                     UiUpdateWorker.DoWork += new DoWorkEventHandler(UiUpdateWorker_DoWork);
@@ -118,7 +117,7 @@ namespace WGClanIconDownload
             }
         }
 
-        void regionHandleWorker_initializeStart(object sender, downloadThreadArgsParameter parameters)
+        private void regionHandleWorker_initializeStart(object sender, downloadThreadArgsParameter parameters)
         {
             try
             {
@@ -137,65 +136,69 @@ namespace WGClanIconDownload
             }
         }
 
-        void regionHandleWorker_Start(object sender, downloadThreadArgsParameter parameters)
+        private void regionHandleWorker_Start(object sender, downloadThreadArgsParameter parameters)
         {
-            try
+            lock (_locker)
             {
-                BackgroundWorker regionHandleWorker = new BackgroundWorker();
-                regionHandleWorker.DoWork += new DoWorkEventHandler(regionHandleWorker_DoWork);
-                regionHandleWorker.ProgressChanged += new ProgressChangedEventHandler(regionHandleWorker_ProgressChanged);
-                regionHandleWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(regionHandleWorker_RunWorkerCompleted);
-                regionHandleWorker.WorkerReportsProgress = true;
-                regionHandleWorker.WorkerSupportsCancellation = true;
-                regionHandleWorker.RunWorkerAsync(parameters);
-            }
-            catch (Exception ex)
-            {
-                Utils.exceptionLog(string.Format("regionHandleWorker_Start:\nregion:{0}",parameters.region), ex);
+                try
+                {
+                    BackgroundWorker regionHandleWorker = new BackgroundWorker();
+                    regionHandleWorker.DoWork += new DoWorkEventHandler(regionHandleWorker_DoWork);
+                    regionHandleWorker.ProgressChanged += new ProgressChangedEventHandler(regionHandleWorker_ProgressChanged);
+                    regionHandleWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(regionHandleWorker_RunWorkerCompleted);
+                    regionHandleWorker.WorkerReportsProgress = true;
+                    regionHandleWorker.WorkerSupportsCancellation = true;
+                    regionHandleWorker.RunWorkerAsync(parameters);
+                }
+                catch (Exception ex)
+                {
+                    Utils.exceptionLog(string.Format("regionHandleWorker_Start:\nregion:{0}", parameters.region), ex);
+                }
             }
         }
 
-        void regionHandleWorker_DoWork(object sender, DoWorkEventArgs e)
+        private void regionHandleWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             try
             {
                 downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
                 e.Result = parameters;
-                while (dataArray[parameters.indexOfDataArray].clans.Count >0)
+                dataArray[parameters.indexOfDataArray].dlIconsThreads = Constants.INVALID_HANDLE_VALUE;
+                while (dataArray[parameters.indexOfDataArray].clans.Count > 0 && dataArray[parameters.indexOfDataArray].dlIconsThreads != 0)
                 {
-                    bool setNewDownloadEvent = false;
-                    int Range = 20;
-                    downloadThreadArgsParameter pushParameters = new downloadThreadArgsParameter();
-                    pushParameters.region = parameters.region;
-                    pushParameters.indexOfDataArray = parameters.indexOfDataArray;
-                    
                     lock (_locker)
                     {
+                        if (dataArray[parameters.indexOfDataArray].dlIconsThreads == Constants.INVALID_HANDLE_VALUE) { dataArray[parameters.indexOfDataArray].dlIconsThreads = 0; };
+                        bool setNewDownloadEvent = false;
+                        int Range = 20;
+                        downloadThreadArgsParameter pushParameters = new downloadThreadArgsParameter();
+                        pushParameters.region = parameters.region;
+                        pushParameters.indexOfDataArray = parameters.indexOfDataArray;
+
                         if ((dataArray[pushParameters.indexOfDataArray].dlIconsThreads <= Settings.viaUiThreadsAllowed) && (dataArray[pushParameters.indexOfDataArray].clans.Count > 0))
                         {
                             pushParameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
                             dataArray[pushParameters.indexOfDataArray].dlIconsThreads++;
                             setNewDownloadEvent = true;
                             if (dataArray[pushParameters.indexOfDataArray].clans.Count < Range) { Range = dataArray[pushParameters.indexOfDataArray].clans.Count; }
-                            // pushParameters.downloadList = new List<clanData>();
-                            // parameters.timeStamp = TimeSpan.ToString(@"hh\:mm\:ss.fffffff");
                             pushParameters.downloadList.AddRange(dataArray[pushParameters.indexOfDataArray].clans.GetRange(0, Range));
                             dataArray[pushParameters.indexOfDataArray].clans.RemoveRange(0, Range);
                         }
+                        if (setNewDownloadEvent)
+                        {
+                            downloadThreadHandler_DoWork(sender, pushParameters);
+                            setNewDownloadEvent = false;
+                        };
                     }
-                    if (setNewDownloadEvent)
-                    {
-                        downloadThreadHandler_DoWork(sender, pushParameters);
-                        setNewDownloadEvent = false;
-                    };
                     Thread.Sleep(50);
                 }
-                
+
             }
             catch (Exception ex)
             {
                 Utils.exceptionLog("regionHandleWorker_DoWork", ex);
             }
+
         }
 
         void regionHandleWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -250,13 +253,13 @@ namespace WGClanIconDownload
 
         void downloadThreadHandler_DoWork(object sender, downloadThreadArgsParameter parameters)
         {
-            string emblems = "";
-            string tag = "";
-            try
+            lock (_locker)
             {
-                lock(parameters)
-                { 
-                    // downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
+                string emblems = "";
+                string tag = "";
+                try
+                {
+                     // downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
                     if (parameters.downloadList.Count == 0 || parameters.downloadList == null)
                     {
                         lock (_locker)
@@ -308,55 +311,76 @@ namespace WGClanIconDownload
                         webClient.DownloadFileCompleted += new AsyncCompletedEventHandler(downloadThreadHandler_DownloadFileCompleted);
                         webClient.DownloadFileAsync(new Uri(emblems), completeFilename, parameters);
                     }
+                
                 }
-            }
-            catch (Exception ex)
-            {
-                Utils.exceptionLog("downloadThreadHandler_DoWork", ex);
+                catch (Exception ex)
+                {
+                    Utils.exceptionLog("downloadThreadHandler_DoWork", ex);
+                }
             }
         }
 
         void downloadThreadHandler_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
-            try
+            lock (_locker)
             {
-                downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.UserState;
-                if (e.Cancelled)
+                try
                 {
-                    Utils.appendLog("threat region: " + parameters.region + " is stopped by cancel");
-                }
-                else if (e.Error != null)
-                {
-                    downloadThreadHandler_DoWork(sender, parameters);
-                    Utils.appendLog("Error at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + "):\n" + e.Error.ToString());
-                    return;
-                }
-                else
-                {
+                    downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.UserState;
+                    if (e.Cancelled)
+                    {
+                        Utils.appendLog("threat region: " + parameters.region + " is stopped by cancel");
+                    }
+                    else if (e.Error != null)
+                    {
+                        if (e.Error.GetBaseException() is IOException)
+                        {
+                            IOException ioe = (IOException)e.Error.GetBaseException();
+                            if ((UInt32)ioe.HResult == Constants.ERROR_SHARING_VIOLATION)
+                            {
+                                parameters.fileDlErrorCounter = 0;
+                                /// bekanntes Problem mit doppelten puffern. Ignorieren !!
+                            }
+                            else
+                            {
+                                parameters.fileDlErrorCounter++;
+                            }
+                        }
+                        else
+                        {
+                            parameters.fileDlErrorCounter++;
+                        }
+                        if (parameters.fileDlErrorCounter > 3)
+                        {
+                            Utils.appendLog("Error at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + "):\n" + e.Error.ToString());
+                        }
+                        else if (parameters.fileDlErrorCounter > 0)
+                        {
+                            downloadThreadHandler_DoWork(sender, parameters);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        parameters.fileDlErrorCounter = 0;          // download hat funktioniert, daher Zähler auf 0.
+                    }
                     if (parameters.downloadList.Count > 0)
                     {
                         parameters.downloadList.RemoveAt(0);
                     }
-                    lock (_locker)
-                    {
-                        dataArray[parameters.indexOfDataArray].countIconDownload++;
-                    }
+                    dataArray[parameters.indexOfDataArray].countIconDownload++;
                     if (parameters.downloadList.Count > 0)
                     {
                         downloadThreadHandler_DoWork(sender, parameters);
                         return;
                     };
                     // reducing ammount at threads at IconDownload .... no new downlaodThread creation
-                    lock (_locker)
-                    {
-                        dataArray[parameters.indexOfDataArray].dlIconsThreads--;
-                        Utils.appendLog("dlIconsThreads --");
-                    }
+                    dataArray[parameters.indexOfDataArray].dlIconsThreads--;
                 }
-            }
-            catch (Exception ex)
-            {
-                Utils.exceptionLog("downloadThreadHandler_DownloadFileCompleted", ex);
+                catch (Exception ex)
+                {
+                    Utils.exceptionLog("downloadThreadHandler_DownloadFileCompleted", ex);
+                }
             }
         }
 
@@ -465,7 +489,7 @@ namespace WGClanIconDownload
                                     }
                                     else if (Settings.prohibitedFilenames.Contains(c.tag))
                                     {
-                                        Utils.appendLog("Error: found prohibited filename => " + c.tag);
+                                        Utils.appendLog("Error: found prohibited filename => " + c.tag + " ("+parameters.region+")");
                                     }
                                     else
                                     {
