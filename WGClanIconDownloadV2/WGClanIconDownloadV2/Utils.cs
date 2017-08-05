@@ -12,7 +12,7 @@ namespace WGClanIconDownload
         public static void clearLog()
         {
             File.Create(Settings.errorLogFile).Dispose();
-            appendLog("Log opened. (Time zone: " + DateTime.Now.ToString("\"GMT\"zzz") + ")");
+            appendLog("Log opened. (Time zone: " + DateTime.Now.ToString("\"GMT\" zzz") + ")");
         }
 
         public static void appendLog(string info)
@@ -75,15 +75,17 @@ namespace WGClanIconDownload
 
         public static void exceptionLog(string name, Exception e)
         {
+            string msg = "";
             if (name.Equals(""))
-                Utils.appendLog("EXCEPTION (call stack traceback):");
+                msg += "EXCEPTION (call stack traceback):";
             else
-                Utils.appendLog(string.Format("EXCEPTION (call stack traceback):\nMarker: {0}", name));
-            try { Utils.appendLog(e.StackTrace); } catch { };
-            try { Utils.appendLog("message: " + e.Message); } catch { };
-            try { Utils.appendLog("source: " + e.Source); } catch { };
-            try { Utils.appendLog("target: " + e.TargetSite); } catch { };
-            try { Utils.appendLog("InnerException: " + e.InnerException); } catch { };
+                msg += string.Format("EXCEPTION (call stack traceback) => Marker: {0}\n", name);
+            try { msg += e.StackTrace; } catch { };
+            try { msg += "\nmessage: " + e.Message; } catch { };
+            try { msg += "\nsource: " + e.Source; } catch { };
+            try { msg += "\ntarget: " + e.TargetSite; } catch { };
+            try { msg += "\nInnerException: " + e.InnerException; } catch { };
+            try { appendLog(msg); } catch { };
             try { if (e.Data != null) Utils.dumpObjectToLog("Data", e.Data); } catch { };             /// https://msdn.microsoft.com/de-de/library/system.exception.data(v=vs.110).aspx
         }
     }

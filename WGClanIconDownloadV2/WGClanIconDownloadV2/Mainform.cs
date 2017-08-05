@@ -2,12 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -16,15 +14,18 @@ namespace WGClanIconDownload
 
     public partial class Mainform : Form
     {
-        private List<ProgressBar> progressBar = new List<ProgressBar>() { };
+        // private List<ProgressBar> progressBar = new List<ProgressBar>() { };
         public List<ClassDataArray> dataArray = new List<ClassDataArray>() { };
         public BackgroundWorker UiUpdateWorker;
-        public BackgroundWorker regionHandleWorker;
-        public BackgroundWorker downloadThreadHandler;
+        // public BackgroundWorker regionHandleWorker;
+        // public BackgroundWorker downloadThreadHandler;
+        public Object _locker = new Object();
 
         public Mainform()
         {
             InitializeComponent();
+
+            threads_trackBar.Value = Settings.viaUiThreadsAllowed;
 
             // add data to dataArray
             dataArray = Settings.fillDataArray();
@@ -51,7 +52,7 @@ namespace WGClanIconDownload
                 // Utils.appendLog("buttonStart_Click");
                 if (checkedListBoxRegion.Items.Count > 0)
                 {
-                    int p = 0;
+                    // int p = 0;
                     // Kickoff the worker thread to begin it's DoWork function.
                     for (int i = 0; i < checkedListBoxRegion.Items.Count; i++)
                     {
@@ -74,7 +75,7 @@ namespace WGClanIconDownload
                             /// Create a background worker thread that ReportsProgress &
                             /// SupportsCancellation
                             /// Hook up the appropriate events.
-                            EventArgsParameter pushParameters = new EventArgsParameter();
+                            downloadThreadArgsParameter pushParameters = new downloadThreadArgsParameter();
                             for (int x = 0; x < 2; x++)
                             {
                                 // Do selected stuff
@@ -84,11 +85,16 @@ namespace WGClanIconDownload
                                 parameters.indexOfDataArray = dataArray.Find(r => r.region == parameters.region).indexOfDataArray;
                                 parameters.apiRequestWorkerThread = x;
                                 dataArray[parameters.indexOfDataArray].currentPage = 1;
+                                dataArray[parameters.indexOfDataArray].regionToDownload = true;
                                 apiRequestWorker_start(sender, parameters);
-                                pushParameters = parameters;
+                                pushParameters.region = parameters.region;
+                                pushParameters.indexOfDataArray = parameters.indexOfDataArray;
                                 Utils.appendLog("apiRequest RunWorkerAsync thread region: " + parameters.region + " thread: " + x + " started");
                             }
-                            pushParameters.apiRequestWorkerThread = Constants.INVALID_HANDLE_VALUE;
+                            // var p = (downloadThreadArgsParameter)e.Argument;
+                            // downloadThreadArgsParameter parameters = new downloadThreadArgsParameter();
+                            // parameters.region = p.region;
+                            // parameters.indexOfDataArray = p.indexOfDataArray;
                             regionHandleWorker_initializeStart(sender, pushParameters);
                         }
 
@@ -112,12 +118,18 @@ namespace WGClanIconDownload
             }
         }
 
-        void regionHandleWorker_initializeStart(object sender, EventArgsParameter parameters)
+        void regionHandleWorker_initializeStart(object sender, downloadThreadArgsParameter parameters)
         {
             try
             {
-                Thread.Sleep(3000);
-                regionHandleWorker_Start(sender, parameters);
+                System.Threading.Timer timer = null;                                // delay 3000 ms https://stackoverflow.com/questions/545533/delayed-function-calls
+                timer = new System.Threading.Timer((obj) =>
+                {
+                    regionHandleWorker_Start(sender, parameters);
+                    timer.Dispose();
+                },
+                            null, 3000, System.Threading.Timeout.Infinite);
+                
             }
             catch (Exception ex)
             {
@@ -125,11 +137,11 @@ namespace WGClanIconDownload
             }
         }
 
-        void regionHandleWorker_Start(object sender, EventArgsParameter parameters)
+        void regionHandleWorker_Start(object sender, downloadThreadArgsParameter parameters)
         {
             try
             {
-                regionHandleWorker = new BackgroundWorker();
+                BackgroundWorker regionHandleWorker = new BackgroundWorker();
                 regionHandleWorker.DoWork += new DoWorkEventHandler(regionHandleWorker_DoWork);
                 regionHandleWorker.ProgressChanged += new ProgressChangedEventHandler(regionHandleWorker_ProgressChanged);
                 regionHandleWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(regionHandleWorker_RunWorkerCompleted);
@@ -139,7 +151,7 @@ namespace WGClanIconDownload
             }
             catch (Exception ex)
             {
-                Utils.exceptionLog("regionHandleWorker_Start", ex);
+                Utils.exceptionLog(string.Format("regionHandleWorker_Start:\nregion:{0}",parameters.region), ex);
             }
         }
 
@@ -148,29 +160,37 @@ namespace WGClanIconDownload
             try
             {
                 downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
+                e.Result = parameters;
                 while (dataArray[parameters.indexOfDataArray].clans.Count >0)
                 {
                     bool setNewDownloadEvent = false;
                     int Range = 20;
-                    lock (dataArray)
+                    downloadThreadArgsParameter pushParameters = new downloadThreadArgsParameter();
+                    pushParameters.region = parameters.region;
+                    pushParameters.indexOfDataArray = parameters.indexOfDataArray;
+                    
+                    lock (_locker)
                     {
-                        if (dataArray[parameters.indexOfDataArray].dlIconsThreads <  Settings.viaUiThreadsAllowed)
+                        if ((dataArray[pushParameters.indexOfDataArray].dlIconsThreads <= Settings.viaUiThreadsAllowed) && (dataArray[pushParameters.indexOfDataArray].clans.Count > 0))
                         {
-                            parameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
-                            parameters.dlIconThreadID++;
+                            pushParameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
+                            dataArray[pushParameters.indexOfDataArray].dlIconsThreads++;
                             setNewDownloadEvent = true;
-                            if (dataArray[parameters.indexOfDataArray].clans.Count < Range) { Range = dataArray[parameters.indexOfDataArray].clans.Count; }
-                            parameters.downloadList.AddRange((dataArray[parameters.indexOfDataArray].clans.GetRange(0, Range)));
-                            dataArray[parameters.indexOfDataArray].clans.RemoveRange(0, Range);
+                            if (dataArray[pushParameters.indexOfDataArray].clans.Count < Range) { Range = dataArray[pushParameters.indexOfDataArray].clans.Count; }
+                            // pushParameters.downloadList = new List<clanData>();
+                            // parameters.timeStamp = TimeSpan.ToString(@"hh\:mm\:ss.fffffff");
+                            pushParameters.downloadList.AddRange(dataArray[pushParameters.indexOfDataArray].clans.GetRange(0, Range));
+                            dataArray[pushParameters.indexOfDataArray].clans.RemoveRange(0, Range);
                         }
                     }
                     if (setNewDownloadEvent)
                     {
-                        downloadThreadHandler_DoWork(sender, parameters);
+                        downloadThreadHandler_DoWork(sender, pushParameters);
                         setNewDownloadEvent = false;
                     };
-                    Thread.Sleep(200);
+                    Thread.Sleep(50);
                 }
+                
             }
             catch (Exception ex)
             {
@@ -184,10 +204,40 @@ namespace WGClanIconDownload
 
         void regionHandleWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            try
+            {
+                downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Result;
+                Utils.appendLog("regionHandleWorker " + parameters.region + " stopped");
+            }
+            catch (Exception ex)
+            {
+                Utils.exceptionLog("regionHandleWorker_RunWorkerCompleted", ex);
+            }
         }
 
         void UiUpdateWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            bool finished = false;
+            while (!finished)
+            {
+                finished = true;
+                foreach (var r in dataArray)
+                {
+                    if (r.dlIconsReady != true && r.regionToDownload == true)     // if any region is NOT finished, do not close the UiUpdateWorker
+                    {
+                        finished = false;
+                    }
+                    if (r.dlIconsReady == true && r.regionToDownload == true && r.currentPage > (int)(Math.Ceiling((decimal)r.total / (decimal)Constants.limitApiPageRequest)) && !r.regionFinishedMsgDone)
+                    {
+                        Message_richTextBox.AppendText("Finished with the download of the WG API data for region " + r.region + ".\n");
+                        r.regionFinishedMsgDone = true;
+                    }
+                }
+                if (finished)
+                {
+                    Message_richTextBox.AppendText("Fehlerhaft !! => Finished with all downloads of the selected regions.\n");
+                }
+            }
         }
 
         void UiUpdateWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -200,13 +250,65 @@ namespace WGClanIconDownload
 
         void downloadThreadHandler_DoWork(object sender, downloadThreadArgsParameter parameters)
         {
+            string emblems = "";
+            string tag = "";
             try
             {
-                // downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
-                string filename = Path.Combine(Settings.baseStorageFolder, @"" + string.Format(dataArray[parameters.indexOfDataArray].storagePath + @"{0}.png", parameters.downloadList[0].tag));
-                AwesomeWebClient webClient = new AwesomeWebClient();
-                webClient.DownloadFileCompleted += new AsyncCompletedEventHandler(downloadThreadHandler_DownloadFileCompleted);
-                webClient.DownloadFileAsync(new Uri(parameters.downloadList[0].emblems), filename, parameters);
+                lock(parameters)
+                { 
+                    // downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
+                    if (parameters.downloadList.Count == 0 || parameters.downloadList == null)
+                    {
+                        lock (_locker)
+                        {
+                            dataArray[parameters.indexOfDataArray].dlIconsThreads--;
+                        }
+                        Utils.appendLog("downloadListe = 0");
+                        return;
+                    }
+                    else
+                    {
+                        if (parameters.downloadList[0] == null)
+                        {
+                            if (parameters.downloadList.Count > 1)
+                            {
+                                parameters.downloadList.RemoveAt(0); downloadThreadHandler_DoWork(sender, parameters);
+                                return;
+                            }
+                            else
+                            {
+                                Utils.appendLog("Error: parameters.downloadList[0] = null / count: "+ parameters.downloadList.Count);
+                                dataArray[parameters.indexOfDataArray].dlIconsThreads--;
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            emblems = parameters.downloadList[0].emblems;
+                            tag = parameters.downloadList[0].tag;
+                            if (tag == null)
+                            {
+                                Utils.appendLog("Error: parameters.downloadList[0].tag = null");
+                                dataArray[parameters.indexOfDataArray].dlIconsThreads--;
+                                return;
+                            }
+                            else
+                            {
+                                if (emblems == null)
+                                {
+                                    Utils.appendLog("Error: parameters.downloadList[0].emblems = null");
+                                    dataArray[parameters.indexOfDataArray].dlIconsThreads--;
+                                    return;
+                                }
+                            }
+                        }
+                        string filename = @"" + string.Format(dataArray[parameters.indexOfDataArray].storagePath + @"{0}.png", tag);
+                        string completeFilename = Path.Combine(Settings.baseStorageFolder, filename);
+                        AwesomeWebClient webClient = new AwesomeWebClient();
+                        webClient.DownloadFileCompleted += new AsyncCompletedEventHandler(downloadThreadHandler_DownloadFileCompleted);
+                        webClient.DownloadFileAsync(new Uri(emblems), completeFilename, parameters);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -219,16 +321,37 @@ namespace WGClanIconDownload
             try
             {
                 downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.UserState;
-                parameters.downloadList.RemoveAt(0);
-                lock ( dataArray)
+                if (e.Cancelled)
                 {
-                    dataArray[parameters.indexOfDataArray].countIconDownload++;
+                    Utils.appendLog("threat region: " + parameters.region + " is stopped by cancel");
                 }
-                if (parameters.downloadList.Count > 0) {downloadThreadHandler_DoWork(sender, parameters); return; };
-                // reducing ammount at threads at IconDownload .... no new downlaodThread creation
-                lock (dataArray)
+                else if (e.Error != null)
                 {
-                    dataArray[parameters.indexOfDataArray].dlIconsThreads--;
+                    downloadThreadHandler_DoWork(sender, parameters);
+                    Utils.appendLog("Error at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + "):\n" + e.Error.ToString());
+                    return;
+                }
+                else
+                {
+                    if (parameters.downloadList.Count > 0)
+                    {
+                        parameters.downloadList.RemoveAt(0);
+                    }
+                    lock (_locker)
+                    {
+                        dataArray[parameters.indexOfDataArray].countIconDownload++;
+                    }
+                    if (parameters.downloadList.Count > 0)
+                    {
+                        downloadThreadHandler_DoWork(sender, parameters);
+                        return;
+                    };
+                    // reducing ammount at threads at IconDownload .... no new downlaodThread creation
+                    lock (_locker)
+                    {
+                        dataArray[parameters.indexOfDataArray].dlIconsThreads--;
+                        Utils.appendLog("dlIconsThreads --");
+                    }
                 }
             }
             catch (Exception ex)
@@ -271,13 +394,13 @@ namespace WGClanIconDownload
                 var apiRequestWorkerThread = parameters.apiRequestWorkerThread;
             
                 int currentPage = 0;
-                lock (dataArray)
+                lock (_locker)
                 {
                     currentPage = dataArray[indexOfDataArray].currentPage;
                     dataArray[indexOfDataArray].currentPage++;
                 }
                 string url = string.Format(Settings.wgApiURL, dataArray[indexOfDataArray].url, Settings.wgAppID, Constants.limitApiPageRequest, currentPage);
-                Utils.appendLog("Info: region: " + region + " thread: "+ apiRequestWorkerThread + " page: " + currentPage);
+                // Utils.appendLog("Info: region: " + region + " thread: "+ apiRequestWorkerThread + " page: " + currentPage);
 
                 //Handle the event for download complete
                 parameters.WebClient = new AwesomeWebClient();
@@ -305,13 +428,12 @@ namespace WGClanIconDownload
             try
             {
                 EventArgsParameter parameters = (EventArgsParameter)e.UserState;       // the 'argument' parameter resurfaces here
-                // string region = parameters.region;
-                int indexOfDataArray = parameters.indexOfDataArray;
                 parameters.WebClient.DownloadDataCompleted -= apiRequestWorker_DownloadDataCompleted;
 
                 if (e.Error != null)
                 {
                     Utils.appendLog("Error: download failed\n" + e.Error.ToString());
+                    apiRequestWorker_start(sender, parameters);
                 }
                 else
                 {
@@ -322,9 +444,9 @@ namespace WGClanIconDownload
                     {
                         if (((string)resultPageApiJson.status).Equals("ok"))
                         {
-                            lock (dataArray)
+                            lock (_locker)
                             {
-                                dataArray[indexOfDataArray].total = ((int)resultPageApiJson.meta.total);
+                                dataArray[parameters.indexOfDataArray].total = ((int)resultPageApiJson.meta.total);
                             }
                             if ((int)resultPageApiJson.meta.count > 0)
                             {
@@ -334,16 +456,31 @@ namespace WGClanIconDownload
                                     c = new clanData();
                                     c.tag = (string)resultPageApiJson.data[f].tag;
                                     c.emblems = (string)resultPageApiJson.data[f].emblems.x32.portal;
-                                    lock (dataArray)
+                                    if (c.tag == null || c.emblems == null || c.tag.Equals("") || c.emblems.Equals(""))
                                     {
-                                        dataArray[indexOfDataArray].clans.Add(c);
+                                        string msg = "";
+                                        if (c.tag == null) { msg += "tag: (empty)"; } else { msg += "tag: " + c.tag; }
+                                        if (c.emblems == null) { msg += " emblems: (empty)"; } else { msg += " emblems: "+ c.emblems; }
+                                        Utils.appendLog("Error: server: "+parameters.region+" / " + msg);
+                                    }
+                                    else if (Settings.prohibitedFilenames.Contains(c.tag))
+                                    {
+                                        Utils.appendLog("Error: found prohibited filename => " + c.tag);
+                                    }
+                                    else
+                                    {
+                                        lock (_locker)
+                                        {
+                                            dataArray[parameters.indexOfDataArray].clans.Add(c);
+                                        }
                                     }
                                 }
                                 apiRequestWorker_start(sender, parameters);
                             }
                             else   // es gibt keine Datensätze mehr und das holen der "Pages" ist abgeschlossen.
                             {
-                                Utils.appendLog("apiRequestWorker_DownloadDataCompleted killed (meta count = 0)");
+                                dataArray[parameters.indexOfDataArray].dlIconsReady = true;
+                                Utils.appendLog("apiRequestWorker thread "+parameters.apiRequestWorkerThread+" finished with region: "+parameters.region);
                             }
                         }
                     }
@@ -383,6 +520,12 @@ namespace WGClanIconDownload
             {
                 Utils.exceptionLog("apiRequestWorker_RunWorkerCompleted",ex);
             }
+        }
+
+        private void threads_trackBar_Scroll(object sender, EventArgs e)
+        {
+            Settings.viaUiThreadsAllowed = threads_trackBar.Value;
+            Utils.appendLog("Settings.viaUiThreadsAllowed set to: " + Settings.viaUiThreadsAllowed);
         }
     }
 }

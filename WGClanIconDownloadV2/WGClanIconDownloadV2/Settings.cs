@@ -4,6 +4,8 @@ using System.Net;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.ComponentModel;
+using System.Security.Permissions;
+using System.Runtime.InteropServices;
 
 namespace WGClanIconDownload
 {
@@ -35,7 +37,7 @@ namespace WGClanIconDownload
         public static string[] imageIndex = new string[] {
             "wot","portal","wowp"
         };
-        public static int viaUiThreadsAllowed = 2;
+        public static int viaUiThreadsAllowed = 10;
 
         public static List<ClassDataArray> fillDataArray()
         {
@@ -102,6 +104,15 @@ namespace WGClanIconDownload
         /// the "regionHandleWorker_DoWork" will increase the value, "downloadThreadHandler_RunWorkerCompleted" will reduce it 
         /// </summary>
         public int dlIconsThreads { get; set; } = 0;
+        /// <summary>
+        /// this flag is set, if the apiRequester finished his job and reached at least 1 page abouve the calculated page request
+        /// </summary>
+        public bool dlIconsReady { get; set; } = false;
+        /// <summary>
+        /// this flag is set true, if user selected it at the Listbox and pressed start
+        /// </summary>
+        public bool regionToDownload { get; set; } = false;
+        public bool regionFinishedMsgDone { get; set; } = false;
         public string url { get; set; } = null;
         public string storagePath { get; set; } = null;
         public List<clanData> clans = new List<clanData>();
@@ -122,11 +133,18 @@ namespace WGClanIconDownload
         public AwesomeWebClient WebClient { get; set; } = new AwesomeWebClient();
     }
 
-    public class downloadThreadArgsParameter
+    public class downloadThreadArgsParameter : IDisposable
     {
         public string region { get; set; } = null;
         public int indexOfDataArray { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int dlIconThreadID { get; set; } = Constants.INVALID_HANDLE_VALUE;
+        public string timeStamp { get; set; } = null;
         public List<clanData> downloadList = new List<clanData>();
+        // [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
+        public void Dispose()  // Follow the Dispose pattern - public nonvirtual.
+        {
+            this.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }
