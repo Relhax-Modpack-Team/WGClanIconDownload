@@ -192,7 +192,7 @@ namespace WGClanIconDownload
             separatorBevelLineLabel.Location = new System.Drawing.Point(281, overallTickLabel.Top - 3);
             separatorBevelLineLabel.Visible = overallTickLabel.Visible;
         }
-    
+
         private void regionHandleWorker_initializeStart(object sender, downloadThreadArgsParameter parameters)
         {
             try
@@ -594,10 +594,10 @@ namespace WGClanIconDownload
                     var apiRequestWorkerThread = parameters.apiRequestWorkerThread;
 
                     int currentPage = 0;
-                
-                        currentPage = dataArray[indexOfDataArray].currentPage;
-                        dataArray[indexOfDataArray].currentPage++;
-                
+
+                    currentPage = dataArray[indexOfDataArray].currentPage;
+                    dataArray[indexOfDataArray].currentPage++;
+
                     string url = string.Format(Settings.wgApiURL, dataArray[indexOfDataArray].url, Settings.wgAppID, Constants.limitApiPageRequest, currentPage);
 
                     //Handle the event for download complete
@@ -687,7 +687,7 @@ namespace WGClanIconDownload
                 }
                 catch (Exception ex)
                 {
-                    Utils.exceptionLog("apiRequestWorker_DownloadDataCompleted",ex);
+                    Utils.exceptionLog("apiRequestWorker_DownloadDataCompleted", ex);
                 }
             }
         }
@@ -718,7 +718,7 @@ namespace WGClanIconDownload
             }
             catch (Exception ex)
             {
-                Utils.exceptionLog("apiRequestWorker_RunWorkerCompleted",ex);
+                Utils.exceptionLog("apiRequestWorker_RunWorkerCompleted", ex);
             }
         }
 
@@ -744,6 +744,19 @@ namespace WGClanIconDownload
             Message_richTextBox.SelectionStart = Message_richTextBox.Text.Length;
             // scroll it automatically
             Message_richTextBox.ScrollToCaret();
+        }
+
+        private void checkedListBoxRegion_SelectedValueChanged(object sender, EventArgs e)
+        {
+            for (int i = 0; i < checkedListBoxRegion.Items.Count; i++)
+            {
+                if (checkedListBoxRegion.GetItemCheckState(i) == CheckState.Checked)
+                {
+                    start_button.Enabled = true;
+                    return;
+                }
+            }
+            start_button.Enabled = false;
         }
     }
 }

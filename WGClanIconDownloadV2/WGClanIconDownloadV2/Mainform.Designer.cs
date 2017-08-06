@@ -41,11 +41,13 @@
             this.separatorBevelLineLabel = new System.Windows.Forms.Label();
             this.overallTickLabel_toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.threads_trackBar_toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.cancel_button = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.threads_trackBar)).BeginInit();
             this.SuspendLayout();
             // 
             // start_button
             // 
+            this.start_button.Enabled = false;
             this.start_button.Location = new System.Drawing.Point(374, 12);
             this.start_button.Name = "start_button";
             this.start_button.Size = new System.Drawing.Size(97, 26);
@@ -66,6 +68,7 @@
             this.checkedListBoxRegion.Sorted = true;
             this.checkedListBoxRegion.TabIndex = 1;
             this.checkedListBoxRegion.ThreeDCheckBoxes = true;
+            this.checkedListBoxRegion.SelectedValueChanged += new System.EventHandler(this.checkedListBoxRegion_SelectedValueChanged);
             // 
             // threads_trackBar
             // 
@@ -162,11 +165,22 @@
             this.threads_trackBar_toolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
             this.threads_trackBar_toolTip.ToolTipTitle = "simultaneous downloads";
             // 
+            // cancel_button
+            // 
+            this.cancel_button.Enabled = false;
+            this.cancel_button.Location = new System.Drawing.Point(374, 44);
+            this.cancel_button.Name = "cancel_button";
+            this.cancel_button.Size = new System.Drawing.Size(97, 26);
+            this.cancel_button.TabIndex = 10;
+            this.cancel_button.Text = "cancel";
+            this.cancel_button.UseVisualStyleBackColor = true;
+            // 
             // Mainform
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(499, 285);
+            this.Controls.Add(this.cancel_button);
             this.Controls.Add(this.separatorBevelLineLabel);
             this.Controls.Add(this.overallTickLabel);
             this.Controls.Add(this.UiThreadsAllowed_label);
@@ -176,6 +190,7 @@
             this.Controls.Add(this.checkedListBoxRegion);
             this.Controls.Add(this.start_button);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Mainform";
             this.Text = "WG Clan Icon Downloader";
@@ -198,6 +213,7 @@
         private System.Windows.Forms.Label separatorBevelLineLabel;
         private System.Windows.Forms.ToolTip overallTickLabel_toolTip;
         private System.Windows.Forms.ToolTip threads_trackBar_toolTip;
+        private System.Windows.Forms.Button cancel_button;
     }
 }
 

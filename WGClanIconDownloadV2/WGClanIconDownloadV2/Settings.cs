@@ -1,12 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Net;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using System.ComponentModel;
 using System.Security.Permissions;
-using System.Runtime.InteropServices;
 using ProgressBarWithText;
+using System.Diagnostics;
 
 namespace WGClanIconDownload
 {
@@ -14,10 +12,10 @@ namespace WGClanIconDownload
     {
         // public static string baseStorageFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
         // public static string baseStorageFolder = Path.GetDirectoryName(Application.ExecutablePath);
-        public static string baseStorageFolder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-        // public static string baseStorageFolder = Path.GetDirectoryName(Process.GetCurrentProcess).MainModule.FileName);
-        // public static string ErrorLogFile = Path.Combine(baseStorageFolder, "logs", "error.log");
-        public static string errorLogFile = @"C:\Users\Ich\Desktop\ClanDownload.log";
+        // public static string baseStorageFolder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        public static string baseStorageFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+        public static string errorLogFile = Path.Combine(baseStorageFolder, "logs", "error.log");
+        // public static string errorLogFile = @"C:\Users\Ich\Desktop\ClanDownload.log";
         public static string processLogFile = Path.Combine(baseStorageFolder, "logs", "process.dat");
         public static string folderStructure = @"download\{reg}\res_mods\mods\shared_resources\xvm\res\clanicons\{reg}\clan\";
         public static string wgAppID = "d0bfec3ab1967d9582a73fef7d86ff02";

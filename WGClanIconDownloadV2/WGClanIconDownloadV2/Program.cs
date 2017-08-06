@@ -14,10 +14,18 @@ namespace WGClanIconDownload
         [STAThread]
         static void Main()
         {
-            Utils.clearLog();
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Mainform());
+            if (System.Diagnostics.Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location)).Count() > 1)
+            {
+                MessageBox.Show("Only one running instance of the program is allowed.", "STOP", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                Application.Exit();
+            }
+            else
+            {
+                Utils.clearLog();
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new Mainform());
+            }
         }
     }
 }

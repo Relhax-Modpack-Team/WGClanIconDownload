@@ -12,25 +12,39 @@ namespace WGClanIconDownload
 {
     public class Utils
     {
+        public static Object _locker = new Object();
+
         public static void clearLog()
         {
-            File.Create(Settings.errorLogFile).Dispose();
-            appendLog("Log opened. (Time zone: " + DateTime.Now.ToString("\"GMT\" zzz") + ")");
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Settings.errorLogFile)); 
+                File.Create(Settings.errorLogFile).Dispose();
+                appendLog("Log opened. (Time zone: " + DateTime.Now.ToString("\"GMT\" zzz") + ")");
+            }
+            catch
+            {
+                MessageBox.Show("Program cannot create the Log-File and will now terminate.\n\nMaybe not enough access rights to create files and folders?", "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Environment.Exit(9);
+            }
         }
 
         public static void appendLog(string info)
         {
-            string currentDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff   ");
-            info = info.Replace("\n", "\n" + string.Concat(Enumerable.Repeat(" ", 26))) + "\n";
-            bool _ready = false;
-            while (!_ready)
+            lock (_locker)
             {
-                try
+                string currentDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff   ");
+                info = info.Replace("\n", "\n" + string.Concat(Enumerable.Repeat(" ", 26))) + "\n";
+                bool _ready = false;
+                while (!_ready)
                 {
-                    File.AppendAllText(Settings.errorLogFile, currentDate + info);
-                    _ready = true;
+                    try
+                    {
+                        File.AppendAllText(Settings.errorLogFile, currentDate + info);
+                        _ready = true;
+                    }
+                    catch { }
                 }
-                catch { }
             }
         }
 
@@ -106,6 +120,22 @@ namespace WGClanIconDownload
         {
             Type genericListType = typeof(List<>).MakeGenericType(myType);
             return (IList)Activator.CreateInstance(genericListType);
+        }
+
+        public bool createFileFromBase64String(string filename, string base64)
+        {
+            // byte[] data = Convert.FromBase64String(base64);
+            // string decodedString = Encoding.UTF8.GetString(data);
+            try
+            {
+                File.WriteAllBytes(filename, Convert.FromBase64String(base64));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Utils.exceptionLog("createFileFromBase64String", ex);
+                return false;
+            }
         }
     }
 
