@@ -52,6 +52,7 @@ namespace WGClanIconDownload
                 // Utils.appendLog("buttonStart_Click");
                 if (checkedListBoxRegion.Items.Count > 0)
                 {
+                    Message_richTextBox.AppendText("started request at WG API for Clan data ...\n");
                     int t = 0;
                     // Kickoff the worker thread to begin it's DoWork function.
                     for (int i = 0; i < checkedListBoxRegion.Items.Count; i++)
@@ -146,6 +147,7 @@ namespace WGClanIconDownload
             {
                 try
                 {
+                    Message_richTextBox.AppendText("started downloading of Clan Icons in region "+parameters.region+" ...\n");
                     BackgroundWorker regionHandleWorker = new BackgroundWorker();
                     regionHandleWorker.DoWork += new DoWorkEventHandler(regionHandleWorker_DoWork);
                     regionHandleWorker.ProgressChanged += new ProgressChangedEventHandler(regionHandleWorker_ProgressChanged);
@@ -236,13 +238,13 @@ namespace WGClanIconDownload
                     {
                         // 
                         int lastPage = (int)(Math.Ceiling((decimal)r.total / (decimal)Constants.limitApiPageRequest));
-                        if (r.regionToDownload == true && (r.total == Constants.INVALID_HANDLE_VALUE || (r.dlIconsThreads != 0 && r.dlThreadsStarted)))     // if any region is NOT finished, do not close the UiUpdateWorker
+                        if (r.regionToDownload == true && (r.total == Constants.INVALID_HANDLE_VALUE || r.dlIconsThreads != 0 || r.total > 0 && !r.dlThreadsStarted))     // if any region is NOT finished, do not close the UiUpdateWorker
                         {
                             finished = false;
                         }
                         if (r.dlIconsReady == true && r.regionToDownload == true && r.currentPage > lastPage && !r.regionFinishedMsgDone)
                         {
-                            Message_richTextBox.AppendText("Finished with the download of the WG API data for region " + r.region + ".\n");
+                            Message_richTextBox.AppendText("finished with the request at WG API for Clan data for region " + r.region + ".\n");
                             r.regionFinishedMsgDone = true;
                         }
                         if (r.total>0)
