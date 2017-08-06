@@ -120,6 +120,16 @@ namespace WGClanIconDownload
             dataArray[parameters.indexOfDataArray].customProgressBar.DisplayStyle = ProgressBarDisplayText.CustomText;
             dataArray[parameters.indexOfDataArray].customProgressBar.CustomText = parameters.region;
             this.Controls.Add(dataArray[parameters.indexOfDataArray].customProgressBar);
+
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel = new System.Windows.Forms.Label();
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.AutoSize = true;
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Location = new System.Drawing.Point(272, 204 + t * 25);
+            /// dataArray[parameters.indexOfDataArray].regionThreadsLabel.Name = "regionThreadsLabel";
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Size = new System.Drawing.Size(35, 13);
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.TabIndex = 5;
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Text = "0";
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Controls.Add(dataArray[parameters.indexOfDataArray].regionThreadsLabel);
         }
 
         private void regionHandleWorker_initializeStart(object sender, downloadThreadArgsParameter parameters)
@@ -181,7 +191,7 @@ namespace WGClanIconDownload
                         pushParameters.region = parameters.region;
                         pushParameters.indexOfDataArray = parameters.indexOfDataArray;
 
-                        if ((dataArray[pushParameters.indexOfDataArray].dlIconsThreads <= Settings.viaUiThreadsAllowed) && (dataArray[pushParameters.indexOfDataArray].clans.Count > 0))
+                        if ((dataArray[pushParameters.indexOfDataArray].dlIconsThreads < Settings.viaUiThreadsAllowed) && (dataArray[pushParameters.indexOfDataArray].clans.Count > 0))
                         {
                             pushParameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
                             dataArray[pushParameters.indexOfDataArray].dlIconsThreads++;
@@ -250,6 +260,7 @@ namespace WGClanIconDownload
                             r.customProgressBar.CustomText = string.Format("{0}/{1}", r.countIconDownload, r.total);
                             r.customProgressBar.Maximum = r.total;
                             r.customProgressBar.Value = r.countIconDownload;
+                            r.regionThreadsLabel.Text = r.dlIconsThreads.ToString();
                         }
                     }
                     Thread.Sleep(250);

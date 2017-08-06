@@ -57,7 +57,7 @@
             // threads_trackBar
             // 
             this.threads_trackBar.Location = new System.Drawing.Point(156, 12);
-            this.threads_trackBar.Maximum = 40;
+            this.threads_trackBar.Maximum = 100;
             this.threads_trackBar.Minimum = 1;
             this.threads_trackBar.Name = "threads_trackBar";
             this.threads_trackBar.Size = new System.Drawing.Size(97, 45);

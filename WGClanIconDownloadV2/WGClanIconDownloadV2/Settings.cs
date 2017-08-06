@@ -122,6 +122,7 @@ namespace WGClanIconDownload
         public string storagePath { get; set; } = null;
         public List<clanData> clans = new List<clanData>();
         public CustomProgressBar customProgressBar = new CustomProgressBar();
+        public Label regionThreadsLabel = new Label();
         public ClassDataArray() { }
     }
 
