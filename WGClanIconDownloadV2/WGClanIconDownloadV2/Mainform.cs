@@ -229,14 +229,12 @@ namespace WGClanIconDownload
         {
             try
             {
-                // Thread.Sleep(10000);
                 bool finished = false;
                 while (!finished)
                 {
                     finished = true;
                     foreach (var r in dataArray)
                     {
-                        // 
                         int lastPage = (int)(Math.Ceiling((decimal)r.total / (decimal)Constants.limitApiPageRequest));
                         if (r.regionToDownload == true && (r.total == Constants.INVALID_HANDLE_VALUE || r.dlIconsThreads != 0 || r.total > 0 && !r.dlThreadsStarted))     // if any region is NOT finished, do not close the UiUpdateWorker
                         {
@@ -244,7 +242,7 @@ namespace WGClanIconDownload
                         }
                         if (r.dlIconsReady == true && r.regionToDownload == true && r.currentPage > lastPage && !r.regionFinishedMsgDone)
                         {
-                            Message_richTextBox.AppendText("finished with the request at WG API for Clan data for region " + r.region + ".\n");
+                            Message_richTextBox.AppendText("finished with the request at WG API for Clan data for region " + r.region + "\n");
                             r.regionFinishedMsgDone = true;
                         }
                         if (r.total>0)
@@ -257,7 +255,7 @@ namespace WGClanIconDownload
                     Thread.Sleep(250);
                     if (finished)
                     {
-                        Message_richTextBox.AppendText("Fehlerhaft !! => Finished with all downloads of the selected regions.\n");
+                        Message_richTextBox.AppendText("... finished with all downloads of the selected regions.\n");
                         Utils.appendLog("UiUpdateWorker_DoWork finished");
                     }
                 }
@@ -510,7 +508,9 @@ namespace WGClanIconDownload
                                     }
                                     else if (Settings.prohibitedFilenames.Contains(c.tag))
                                     {
+                                        Message_richTextBox.AppendText("found prohibited filename "+ c.tag + " at region "+ parameters.region + " (no Icon possible)\n");
                                         Utils.appendLog("Error: found prohibited filename => " + c.tag + " ("+parameters.region+")");
+                                        dataArray[parameters.indexOfDataArray].countIconDownload++;
                                     }
                                     else
                                     {
