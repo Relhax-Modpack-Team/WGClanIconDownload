@@ -99,6 +99,10 @@ namespace WGClanIconDownload
         public int total { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int currentPage { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int countIconDownload { get; set; } = 0;
+        /// <summary>
+        /// to store the last readed countIconDownload
+        /// </summary>
+        public int dlTickBuffer { get; set; } = 0;
         public int dlErrorCounter { get; set; } = 0;
         /// <summary>
         /// storing the amount of created Icon download threads
@@ -123,6 +127,7 @@ namespace WGClanIconDownload
         public List<clanData> clans = new List<clanData>();
         public CustomProgressBar customProgressBar = new CustomProgressBar();
         public Label regionThreadsLabel = new Label();
+        public Label dlTicksLabel = new Label();
         public ClassDataArray() { }
     }
 

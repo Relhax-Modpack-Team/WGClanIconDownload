@@ -32,6 +32,8 @@
             this.checkedListBoxRegion = new System.Windows.Forms.CheckedListBox();
             this.threads_trackBar = new System.Windows.Forms.TrackBar();
             this.Message_richTextBox = new System.Windows.Forms.RichTextBox();
+            this.overallTickLabel = new System.Windows.Forms.Label();
+            this.avgOverTimeTicksLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.threads_trackBar)).BeginInit();
             this.SuspendLayout();
             // 
@@ -69,15 +71,35 @@
             // 
             this.Message_richTextBox.Location = new System.Drawing.Point(24, 97);
             this.Message_richTextBox.Name = "Message_richTextBox";
-            this.Message_richTextBox.Size = new System.Drawing.Size(447, 100);
+            this.Message_richTextBox.Size = new System.Drawing.Size(447, 111);
             this.Message_richTextBox.TabIndex = 4;
             this.Message_richTextBox.Text = "";
+            this.Message_richTextBox.TextChanged += new System.EventHandler(this.Message_richTextBox_TextChanged);
+            // 
+            // overallTickLabel
+            // 
+            this.overallTickLabel.AutoSize = true;
+            this.overallTickLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.overallTickLabel.Location = new System.Drawing.Point(371, 74);
+            this.overallTickLabel.Name = "overallTickLabel";
+            this.overallTickLabel.Size = new System.Drawing.Size(0, 17);
+            this.overallTickLabel.TabIndex = 5;
+            // 
+            // avgOverTimeTicksLabel
+            // 
+            this.avgOverTimeTicksLabel.AutoSize = true;
+            this.avgOverTimeTicksLabel.Location = new System.Drawing.Point(233, 65);
+            this.avgOverTimeTicksLabel.Name = "avgOverTimeTicksLabel";
+            this.avgOverTimeTicksLabel.Size = new System.Drawing.Size(0, 13);
+            this.avgOverTimeTicksLabel.TabIndex = 6;
             // 
             // Mainform
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(499, 213);
+            this.Controls.Add(this.avgOverTimeTicksLabel);
+            this.Controls.Add(this.overallTickLabel);
             this.Controls.Add(this.Message_richTextBox);
             this.Controls.Add(this.threads_trackBar);
             this.Controls.Add(this.checkedListBoxRegion);
@@ -98,6 +120,8 @@
         private System.Windows.Forms.CheckedListBox checkedListBoxRegion;
         private System.Windows.Forms.TrackBar threads_trackBar;
         private System.Windows.Forms.RichTextBox Message_richTextBox;
+        private System.Windows.Forms.Label overallTickLabel;
+        private System.Windows.Forms.Label avgOverTimeTicksLabel;
     }
 }
 

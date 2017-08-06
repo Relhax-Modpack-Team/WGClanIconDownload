@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -17,6 +18,7 @@ namespace WGClanIconDownload
         // private List<ProgressBar> progressBar = new List<ProgressBar>() { };
         public List<ClassDataArray> dataArray = new List<ClassDataArray>() { };
         public BackgroundWorker UiUpdateWorker;
+        public BackgroundWorker TickCounterWorker;
         // public BackgroundWorker regionHandleWorker;
         // public BackgroundWorker downloadThreadHandler;
         public Object _locker = new Object();
@@ -26,7 +28,13 @@ namespace WGClanIconDownload
             InitializeComponent();
 
             threads_trackBar.Value = Settings.viaUiThreadsAllowed;
+            int borderWidth = (this.Width - ClientSize.Width) / 2;
+            int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
+            this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + checkedListBoxRegion.Top;
 
+            Utils.appendLog("Message_richTextBox.Top" + Message_richTextBox.Top);
+            Utils.appendLog("Message_richTextBox.Height" + Message_richTextBox.Height);
+            Utils.appendLog("checkedListBoxRegion.Top" + checkedListBoxRegion.Top);
             // add data to dataArray
             dataArray = Settings.fillDataArray();
 
@@ -88,7 +96,12 @@ namespace WGClanIconDownload
                             create_customProgessBar(pushParameters,t);
                             t++;
                         }
-                        this.Height = 203 + t * 25 + 19 + 25;                   /// set the new Height of the Mainform
+                        int borderWidth = (this.Width - ClientSize.Width) / 2;
+                        int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
+                        this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + t * 25 + checkedListBoxRegion.Top;  /// set the new Height of the Mainform
+
+
+                        /// this.Height = Message_richTextBox.Top+Message_richTextBox.Height  + checkedListBoxRegion.Top;                   
                     }
                     UiUpdateWorker = new BackgroundWorker();
                     UiUpdateWorker.DoWork += new DoWorkEventHandler(UiUpdateWorker_DoWork);
@@ -97,6 +110,12 @@ namespace WGClanIconDownload
                     UiUpdateWorker.WorkerReportsProgress = true;
                     UiUpdateWorker.WorkerSupportsCancellation = true;
                     UiUpdateWorker.RunWorkerAsync();
+
+                    TickCounterWorker = new BackgroundWorker();
+                    TickCounterWorker.DoWork += new DoWorkEventHandler(TickCounterWorker_DoWork);
+                    TickCounterWorker.WorkerReportsProgress = false;
+                    TickCounterWorker.WorkerSupportsCancellation = true;
+                    TickCounterWorker.RunWorkerAsync();
                 }
                 else
                 {
@@ -115,7 +134,7 @@ namespace WGClanIconDownload
             dataArray[parameters.indexOfDataArray].customProgressBar.Size = new System.Drawing.Size(217, 19);
             dataArray[parameters.indexOfDataArray].customProgressBar.Maximum = 1;
             dataArray[parameters.indexOfDataArray].customProgressBar.Minimum = 0;
-            dataArray[parameters.indexOfDataArray].customProgressBar.Location = new System.Drawing.Point(24, 203 + t * 25);
+            dataArray[parameters.indexOfDataArray].customProgressBar.Location = new System.Drawing.Point(24, 216 + t * 25);
             dataArray[parameters.indexOfDataArray].customProgressBar.Visible = true;
             dataArray[parameters.indexOfDataArray].customProgressBar.DisplayStyle = ProgressBarDisplayText.CustomText;
             dataArray[parameters.indexOfDataArray].customProgressBar.CustomText = parameters.region;
@@ -123,13 +142,19 @@ namespace WGClanIconDownload
 
             dataArray[parameters.indexOfDataArray].regionThreadsLabel = new System.Windows.Forms.Label();
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.AutoSize = true;
-            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Location = new System.Drawing.Point(272, 204 + t * 25);
-            /// dataArray[parameters.indexOfDataArray].regionThreadsLabel.Name = "regionThreadsLabel";
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Location = new System.Drawing.Point(260, dataArray[parameters.indexOfDataArray].customProgressBar.Top + 1);
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.Size = new System.Drawing.Size(35, 13);
-            dataArray[parameters.indexOfDataArray].regionThreadsLabel.TabIndex = 5;
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.Text = "0";
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Controls.Add(dataArray[parameters.indexOfDataArray].regionThreadsLabel);
+
+            dataArray[parameters.indexOfDataArray].dlTicksLabel = new System.Windows.Forms.Label();
+            dataArray[parameters.indexOfDataArray].dlTicksLabel.AutoSize = true;
+            dataArray[parameters.indexOfDataArray].dlTicksLabel.Location = new System.Drawing.Point(295, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top);
+            dataArray[parameters.indexOfDataArray].dlTicksLabel.Size = new System.Drawing.Size(35, 13);
+            dataArray[parameters.indexOfDataArray].dlTicksLabel.Text = "";
+            dataArray[parameters.indexOfDataArray].dlTicksLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Controls.Add(dataArray[parameters.indexOfDataArray].dlTicksLabel);
         }
 
         private void regionHandleWorker_initializeStart(object sender, downloadThreadArgsParameter parameters)
@@ -267,6 +292,7 @@ namespace WGClanIconDownload
                     if (finished)
                     {
                         Message_richTextBox.AppendText("... finished with all downloads of the selected regions.\n");
+                        TickCounterWorker.CancelAsync();
                         Utils.appendLog("UiUpdateWorker_DoWork finished");
                     }
                 }
@@ -283,6 +309,42 @@ namespace WGClanIconDownload
 
         void UiUpdateWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+        }
+
+        void TickCounterWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            char d = (char)0x2300;
+            char s = (char)0x2211;
+            List<int> avgBuffer = new List<int>();
+            try
+            {
+                while (!TickCounterWorker.CancellationPending)
+                {
+                    int t = 0;
+                    foreach (var r in dataArray)
+                    {
+                        int i = 0;
+                        int lastTick = r.dlTickBuffer;
+                        r.dlTickBuffer = r.countIconDownload;
+                        i = r.dlTickBuffer - lastTick;
+                        r.dlTicksLabel.Text = "dl/s: "+(i).ToString();
+                        t += i;
+                    }
+                    this.overallTickLabel.Text = s + " dl/s: " + t;
+                    if (!(t == 0 && avgBuffer.Count == 0))
+                    {
+                        avgBuffer.Add(t);
+                        while (avgBuffer.Count > 30) { avgBuffer.RemoveAt(0); };        // max 30 sec buffer
+                        int avgDlTicks = avgBuffer.Sum();
+                        avgOverTimeTicksLabel.Text= d + " dl/s: " + (avgDlTicks/ avgBuffer.Count) + " ("+ avgBuffer.Count + " Ticks)";
+                    }
+                    Thread.Sleep(1000);
+                }
+            }
+            catch (Exception ex)
+            {
+                Utils.exceptionLog("TickCounterWorker_DoWork", ex);
+            }
         }
 
         void downloadThreadHandler_DoWork(object sender, downloadThreadArgsParameter parameters)
@@ -591,6 +653,14 @@ namespace WGClanIconDownload
             {
                 checkedListBoxRegion.SetItemChecked(index, checkedListBoxRegion.GetItemCheckState(index) != CheckState.Checked);
             }
+        }
+
+        private void Message_richTextBox_TextChanged(object sender, EventArgs e)
+        {
+            // set the current caret position to the end
+            Message_richTextBox.SelectionStart = Message_richTextBox.Text.Length;
+            // scroll it automatically
+            Message_richTextBox.ScrollToCaret();
         }
     }
 }
