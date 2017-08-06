@@ -31,7 +31,6 @@
             this.start_button = new System.Windows.Forms.Button();
             this.checkedListBoxRegion = new System.Windows.Forms.CheckedListBox();
             this.threads_trackBar = new System.Windows.Forms.TrackBar();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.Message_richTextBox = new System.Windows.Forms.RichTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.threads_trackBar)).BeginInit();
             this.SuspendLayout();
@@ -40,7 +39,7 @@
             // 
             this.start_button.Location = new System.Drawing.Point(374, 12);
             this.start_button.Name = "start_button";
-            this.start_button.Size = new System.Drawing.Size(97, 39);
+            this.start_button.Size = new System.Drawing.Size(97, 26);
             this.start_button.TabIndex = 0;
             this.start_button.Text = "start";
             this.start_button.UseVisualStyleBackColor = true;
@@ -53,6 +52,7 @@
             this.checkedListBoxRegion.Name = "checkedListBoxRegion";
             this.checkedListBoxRegion.Size = new System.Drawing.Size(116, 79);
             this.checkedListBoxRegion.TabIndex = 1;
+            this.checkedListBoxRegion.MouseClick += new System.Windows.Forms.MouseEventHandler(this.checkedListBoxRegion_MouseClick);
             // 
             // threads_trackBar
             // 
@@ -64,14 +64,6 @@
             this.threads_trackBar.TabIndex = 2;
             this.threads_trackBar.Value = 1;
             this.threads_trackBar.Scroll += new System.EventHandler(this.threads_trackBar_Scroll);
-            // 
-            // progressBar1
-            // 
-            this.progressBar1.Location = new System.Drawing.Point(24, 211);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(219, 19);
-            this.progressBar1.TabIndex = 3;
-            this.progressBar1.Visible = false;
             // 
             // Message_richTextBox
             // 
@@ -85,12 +77,13 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(499, 306);
+            this.ClientSize = new System.Drawing.Size(499, 213);
             this.Controls.Add(this.Message_richTextBox);
-            this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.threads_trackBar);
             this.Controls.Add(this.checkedListBoxRegion);
             this.Controls.Add(this.start_button);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.MaximizeBox = false;
             this.Name = "Mainform";
             this.Text = "WG Clan Icon Downloader";
             ((System.ComponentModel.ISupportInitialize)(this.threads_trackBar)).EndInit();
@@ -104,7 +97,6 @@
         private System.Windows.Forms.Button start_button;
         private System.Windows.Forms.CheckedListBox checkedListBoxRegion;
         private System.Windows.Forms.TrackBar threads_trackBar;
-        private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.RichTextBox Message_richTextBox;
     }
 }

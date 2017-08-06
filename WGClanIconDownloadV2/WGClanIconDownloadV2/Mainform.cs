@@ -5,9 +5,9 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using ProgressBarWithText;
 
 namespace WGClanIconDownload
 {
@@ -52,20 +52,12 @@ namespace WGClanIconDownload
                 // Utils.appendLog("buttonStart_Click");
                 if (checkedListBoxRegion.Items.Count > 0)
                 {
-                    // int p = 0;
+                    int t = 0;
                     // Kickoff the worker thread to begin it's DoWork function.
                     for (int i = 0; i < checkedListBoxRegion.Items.Count; i++)
                     {
                         if (checkedListBoxRegion.GetItemCheckState(i) == CheckState.Checked)
                         {
-                            // ProgressBar pB = new System.Windows.Forms.ProgressBar();
-                            // pB.Location = new System.Drawing.Point(24, 145+p*30);
-                            // pB.Size = new System.Drawing.Size(219, 19);
-                            // pB.Visible = true;
-                            // this.progressBar.Add(pB);
-                            // progressBar[p].CreateGraphics().DrawString(progressBar[p].Value.ToString() + "%", new Font("Arial", (float)8.25), Brushes.Black, 100, 5);
-                            // p++;
-
                             //Change the status of the buttons on the UI accordingly
                             //The start button is disabled as soon as the background operation is started
                             //The Cancel button is enabled so that the user can stop the operation 
@@ -91,12 +83,11 @@ namespace WGClanIconDownload
                                 pushParameters.indexOfDataArray = parameters.indexOfDataArray;
                                 Utils.appendLog("apiRequest RunWorkerAsync thread region: " + parameters.region + " thread: " + x + " started");
                             }
-                            // var p = (downloadThreadArgsParameter)e.Argument;
-                            // downloadThreadArgsParameter parameters = new downloadThreadArgsParameter();
-                            // parameters.region = p.region;
-                            // parameters.indexOfDataArray = p.indexOfDataArray;
                             regionHandleWorker_initializeStart(sender, pushParameters);
+                            create_customProgessBar(pushParameters,t);
+                            t++;
                         }
+                        this.Height = 203 + t * 25 + 19 + 25;                   /// set the new Height of the Mainform
                     }
                     UiUpdateWorker = new BackgroundWorker();
                     UiUpdateWorker.DoWork += new DoWorkEventHandler(UiUpdateWorker_DoWork);
@@ -115,6 +106,19 @@ namespace WGClanIconDownload
             {
                 Utils.exceptionLog("start_button_Click", ex);
             }
+        }
+
+        public void create_customProgessBar(downloadThreadArgsParameter parameters, int t)
+        {
+            dataArray[parameters.indexOfDataArray].customProgressBar = new CustomProgressBar();
+            dataArray[parameters.indexOfDataArray].customProgressBar.Size = new System.Drawing.Size(217, 19);
+            dataArray[parameters.indexOfDataArray].customProgressBar.Maximum = 1;
+            dataArray[parameters.indexOfDataArray].customProgressBar.Minimum = 0;
+            dataArray[parameters.indexOfDataArray].customProgressBar.Location = new System.Drawing.Point(24, 203 + t * 25);
+            dataArray[parameters.indexOfDataArray].customProgressBar.Visible = true;
+            dataArray[parameters.indexOfDataArray].customProgressBar.DisplayStyle = ProgressBarDisplayText.CustomText;
+            dataArray[parameters.indexOfDataArray].customProgressBar.CustomText = parameters.region;
+            this.Controls.Add(dataArray[parameters.indexOfDataArray].customProgressBar);
         }
 
         private void regionHandleWorker_initializeStart(object sender, downloadThreadArgsParameter parameters)
@@ -179,6 +183,7 @@ namespace WGClanIconDownload
                         {
                             pushParameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
                             dataArray[pushParameters.indexOfDataArray].dlIconsThreads++;
+                            dataArray[pushParameters.indexOfDataArray].dlThreadsStarted = true;
                             setNewDownloadEvent = true;
                             if (dataArray[pushParameters.indexOfDataArray].clans.Count < Range) { Range = dataArray[pushParameters.indexOfDataArray].clans.Count; }
                             pushParameters.downloadList.AddRange(dataArray[pushParameters.indexOfDataArray].clans.GetRange(0, Range));
@@ -220,26 +225,44 @@ namespace WGClanIconDownload
 
         void UiUpdateWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            bool finished = false;
-            while (!finished)
+            try
             {
-                finished = true;
-                foreach (var r in dataArray)
+                // Thread.Sleep(10000);
+                bool finished = false;
+                while (!finished)
                 {
-                    if (r.dlIconsReady != true && r.regionToDownload == true)     // if any region is NOT finished, do not close the UiUpdateWorker
+                    finished = true;
+                    foreach (var r in dataArray)
                     {
-                        finished = false;
+                        // 
+                        int lastPage = (int)(Math.Ceiling((decimal)r.total / (decimal)Constants.limitApiPageRequest));
+                        if (r.regionToDownload == true && (r.total == Constants.INVALID_HANDLE_VALUE || (r.dlIconsThreads != 0 && r.dlThreadsStarted)))     // if any region is NOT finished, do not close the UiUpdateWorker
+                        {
+                            finished = false;
+                        }
+                        if (r.dlIconsReady == true && r.regionToDownload == true && r.currentPage > lastPage && !r.regionFinishedMsgDone)
+                        {
+                            Message_richTextBox.AppendText("Finished with the download of the WG API data for region " + r.region + ".\n");
+                            r.regionFinishedMsgDone = true;
+                        }
+                        if (r.total>0)
+                        {
+                            r.customProgressBar.CustomText = string.Format("{0}/{1}", r.countIconDownload, r.total);
+                            r.customProgressBar.Maximum = r.total;
+                            r.customProgressBar.Value = r.countIconDownload;
+                        }
                     }
-                    if (r.dlIconsReady == true && r.regionToDownload == true && r.currentPage > (int)(Math.Ceiling((decimal)r.total / (decimal)Constants.limitApiPageRequest)) && !r.regionFinishedMsgDone)
+                    Thread.Sleep(250);
+                    if (finished)
                     {
-                        Message_richTextBox.AppendText("Finished with the download of the WG API data for region " + r.region + ".\n");
-                        r.regionFinishedMsgDone = true;
+                        Message_richTextBox.AppendText("Fehlerhaft !! => Finished with all downloads of the selected regions.\n");
+                        Utils.appendLog("UiUpdateWorker_DoWork finished");
                     }
                 }
-                if (finished)
-                {
-                    Message_richTextBox.AppendText("Fehlerhaft !! => Finished with all downloads of the selected regions.\n");
-                }
+            }
+            catch (Exception ex)
+            {
+                Utils.exceptionLog("UiUpdateWorker_DoWork", ex);
             }
         }
 
@@ -259,14 +282,12 @@ namespace WGClanIconDownload
                 string tag = "";
                 try
                 {
-                     // downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
                     if (parameters.downloadList.Count == 0 || parameters.downloadList == null)
                     {
                         lock (_locker)
                         {
                             dataArray[parameters.indexOfDataArray].dlIconsThreads--;
                         }
-                        Utils.appendLog("downloadListe = 0");
                         return;
                     }
                     else
@@ -280,7 +301,6 @@ namespace WGClanIconDownload
                             }
                             else
                             {
-                                Utils.appendLog("Error: parameters.downloadList[0] = null / count: "+ parameters.downloadList.Count);
                                 dataArray[parameters.indexOfDataArray].dlIconsThreads--;
                                 return;
                             }
@@ -339,7 +359,7 @@ namespace WGClanIconDownload
                             if ((UInt32)ioe.HResult == Constants.ERROR_SHARING_VIOLATION)
                             {
                                 parameters.fileDlErrorCounter = 0;
-                                /// bekanntes Problem mit doppelten puffern. Ignorieren !!
+                                /// bekanntes Problem mit doppelten Puffern. Ignorieren !!
                             }
                             else
                             {
@@ -424,7 +444,6 @@ namespace WGClanIconDownload
                     dataArray[indexOfDataArray].currentPage++;
                 }
                 string url = string.Format(Settings.wgApiURL, dataArray[indexOfDataArray].url, Settings.wgAppID, Constants.limitApiPageRequest, currentPage);
-                // Utils.appendLog("Info: region: " + region + " thread: "+ apiRequestWorkerThread + " page: " + currentPage);
 
                 //Handle the event for download complete
                 parameters.WebClient = new AwesomeWebClient();
@@ -550,6 +569,15 @@ namespace WGClanIconDownload
         {
             Settings.viaUiThreadsAllowed = threads_trackBar.Value;
             Utils.appendLog("Settings.viaUiThreadsAllowed set to: " + Settings.viaUiThreadsAllowed);
+        }
+
+        private void checkedListBoxRegion_MouseClick(object sender, MouseEventArgs e)
+        {
+            int index = this.checkedListBoxRegion.IndexFromPoint(e.Location);
+            if (index != Constants.INVALID_HANDLE_VALUE)
+            {
+                checkedListBoxRegion.SetItemChecked(index, checkedListBoxRegion.GetItemCheckState(index) != CheckState.Checked);
+            }
         }
     }
 }

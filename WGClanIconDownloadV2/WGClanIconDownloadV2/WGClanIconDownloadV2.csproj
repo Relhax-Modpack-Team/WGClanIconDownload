@@ -63,6 +63,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomProgressBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="ObjectDumper.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Settings.cs" />

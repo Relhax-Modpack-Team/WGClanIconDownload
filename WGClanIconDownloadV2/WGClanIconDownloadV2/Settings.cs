@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Security.Permissions;
 using System.Runtime.InteropServices;
+using ProgressBarWithText;
 
 namespace WGClanIconDownload
 {
@@ -113,9 +114,14 @@ namespace WGClanIconDownload
         /// </summary>
         public bool regionToDownload { get; set; } = false;
         public bool regionFinishedMsgDone { get; set; } = false;
+        /// <summary>
+        /// this flag is set true, if the first "regionHandleWorker_DoWork" is adding a "downloadThreadHandler"
+        /// </summary>
+        public bool dlThreadsStarted { get; set; } = false;
         public string url { get; set; } = null;
         public string storagePath { get; set; } = null;
         public List<clanData> clans = new List<clanData>();
+        public CustomProgressBar customProgressBar = new CustomProgressBar();
         public ClassDataArray() { }
     }
 
