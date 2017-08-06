@@ -28,12 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Mainform));
             this.start_button = new System.Windows.Forms.Button();
             this.checkedListBoxRegion = new System.Windows.Forms.CheckedListBox();
             this.threads_trackBar = new System.Windows.Forms.TrackBar();
             this.Message_richTextBox = new System.Windows.Forms.RichTextBox();
-            this.overallTickLabel = new System.Windows.Forms.Label();
             this.avgOverTimeTicksLabel = new System.Windows.Forms.Label();
+            this.UiThreadsAllowed_label = new System.Windows.Forms.Label();
+            this.avgOverTimeTicksLabel_toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.overallTickLabel = new System.Windows.Forms.Label();
+            this.separatorBevelLineLabel = new System.Windows.Forms.Label();
+            this.overallTickLabel_toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.threads_trackBar_toolTip = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.threads_trackBar)).BeginInit();
             this.SuspendLayout();
             // 
@@ -49,21 +56,27 @@
             // 
             // checkedListBoxRegion
             // 
+            this.checkedListBoxRegion.BackColor = System.Drawing.SystemColors.Control;
+            this.checkedListBoxRegion.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.checkedListBoxRegion.CheckOnClick = true;
             this.checkedListBoxRegion.FormattingEnabled = true;
             this.checkedListBoxRegion.Location = new System.Drawing.Point(24, 12);
             this.checkedListBoxRegion.Name = "checkedListBoxRegion";
-            this.checkedListBoxRegion.Size = new System.Drawing.Size(116, 79);
+            this.checkedListBoxRegion.Size = new System.Drawing.Size(116, 75);
+            this.checkedListBoxRegion.Sorted = true;
             this.checkedListBoxRegion.TabIndex = 1;
-            this.checkedListBoxRegion.MouseClick += new System.Windows.Forms.MouseEventHandler(this.checkedListBoxRegion_MouseClick);
+            this.checkedListBoxRegion.ThreeDCheckBoxes = true;
             // 
             // threads_trackBar
             // 
-            this.threads_trackBar.Location = new System.Drawing.Point(156, 12);
+            this.threads_trackBar.Location = new System.Drawing.Point(146, 12);
             this.threads_trackBar.Maximum = 100;
             this.threads_trackBar.Minimum = 1;
             this.threads_trackBar.Name = "threads_trackBar";
             this.threads_trackBar.Size = new System.Drawing.Size(97, 45);
             this.threads_trackBar.TabIndex = 2;
+            this.threads_trackBar.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.threads_trackBar_toolTip.SetToolTip(this.threads_trackBar, resources.GetString("threads_trackBar.ToolTip"));
             this.threads_trackBar.Value = 1;
             this.threads_trackBar.Scroll += new System.EventHandler(this.threads_trackBar_Scroll);
             // 
@@ -76,30 +89,88 @@
             this.Message_richTextBox.Text = "";
             this.Message_richTextBox.TextChanged += new System.EventHandler(this.Message_richTextBox_TextChanged);
             // 
+            // avgOverTimeTicksLabel
+            // 
+            this.avgOverTimeTicksLabel.AutoSize = true;
+            this.avgOverTimeTicksLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.avgOverTimeTicksLabel.Location = new System.Drawing.Point(281, 70);
+            this.avgOverTimeTicksLabel.Name = "avgOverTimeTicksLabel";
+            this.avgOverTimeTicksLabel.Size = new System.Drawing.Size(73, 17);
+            this.avgOverTimeTicksLabel.TabIndex = 6;
+            this.avgOverTimeTicksLabel.Text = "ø dl/sec: 0";
+            this.avgOverTimeTicksLabel_toolTip.SetToolTip(this.avgOverTimeTicksLabel, "This is the average download of Clan icons at the last XX seconds.");
+            // 
+            // UiThreadsAllowed_label
+            // 
+            this.UiThreadsAllowed_label.AutoSize = true;
+            this.UiThreadsAllowed_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.UiThreadsAllowed_label.Location = new System.Drawing.Point(158, 40);
+            this.UiThreadsAllowed_label.Name = "UiThreadsAllowed_label";
+            this.UiThreadsAllowed_label.Size = new System.Drawing.Size(30, 17);
+            this.UiThreadsAllowed_label.TabIndex = 7;
+            this.UiThreadsAllowed_label.Text = "x10";
+            this.threads_trackBar_toolTip.SetToolTip(this.UiThreadsAllowed_label, resources.GetString("UiThreadsAllowed_label.ToolTip"));
+            // 
+            // avgOverTimeTicksLabel_toolTip
+            // 
+            this.avgOverTimeTicksLabel_toolTip.AutoPopDelay = 10000;
+            this.avgOverTimeTicksLabel_toolTip.InitialDelay = 500;
+            this.avgOverTimeTicksLabel_toolTip.ReshowDelay = 100;
+            this.avgOverTimeTicksLabel_toolTip.ShowAlways = true;
+            this.avgOverTimeTicksLabel_toolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            this.avgOverTimeTicksLabel_toolTip.ToolTipTitle = "average download over time";
+            // 
             // overallTickLabel
             // 
             this.overallTickLabel.AutoSize = true;
             this.overallTickLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.overallTickLabel.Location = new System.Drawing.Point(371, 74);
+            this.overallTickLabel.Location = new System.Drawing.Point(281, 215);
             this.overallTickLabel.Name = "overallTickLabel";
-            this.overallTickLabel.Size = new System.Drawing.Size(0, 17);
-            this.overallTickLabel.TabIndex = 5;
+            this.overallTickLabel.Size = new System.Drawing.Size(75, 17);
+            this.overallTickLabel.TabIndex = 8;
+            this.overallTickLabel.Text = "∑ dl/sec: 0";
+            this.overallTickLabel_toolTip.SetToolTip(this.overallTickLabel, "this is the sum of all downloaded icons in a second");
+            this.overallTickLabel.Visible = false;
             // 
-            // avgOverTimeTicksLabel
+            // separatorBevelLineLabel
             // 
-            this.avgOverTimeTicksLabel.AutoSize = true;
-            this.avgOverTimeTicksLabel.Location = new System.Drawing.Point(233, 65);
-            this.avgOverTimeTicksLabel.Name = "avgOverTimeTicksLabel";
-            this.avgOverTimeTicksLabel.Size = new System.Drawing.Size(0, 13);
-            this.avgOverTimeTicksLabel.TabIndex = 6;
+            this.separatorBevelLineLabel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.separatorBevelLineLabel.Location = new System.Drawing.Point(281, 210);
+            this.separatorBevelLineLabel.Name = "separatorBevelLineLabel";
+            this.separatorBevelLineLabel.Size = new System.Drawing.Size(95, 2);
+            this.separatorBevelLineLabel.TabIndex = 9;
+            this.separatorBevelLineLabel.TextAlign = System.Drawing.ContentAlignment.BottomRight;
+            this.separatorBevelLineLabel.Visible = false;
+            // 
+            // overallTickLabel_toolTip
+            // 
+            this.overallTickLabel_toolTip.AutoPopDelay = 10000;
+            this.overallTickLabel_toolTip.InitialDelay = 500;
+            this.overallTickLabel_toolTip.ReshowDelay = 100;
+            this.overallTickLabel_toolTip.ShowAlways = true;
+            this.overallTickLabel_toolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            this.overallTickLabel_toolTip.ToolTipTitle = "sum of current downloads";
+            // 
+            // threads_trackBar_toolTip
+            // 
+            this.threads_trackBar_toolTip.AutoPopDelay = 10000;
+            this.threads_trackBar_toolTip.InitialDelay = 500;
+            this.threads_trackBar_toolTip.IsBalloon = true;
+            this.threads_trackBar_toolTip.ReshowDelay = 100;
+            this.threads_trackBar_toolTip.ShowAlways = true;
+            this.threads_trackBar_toolTip.StripAmpersands = true;
+            this.threads_trackBar_toolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            this.threads_trackBar_toolTip.ToolTipTitle = "simultaneous downloads";
             // 
             // Mainform
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(499, 213);
-            this.Controls.Add(this.avgOverTimeTicksLabel);
+            this.ClientSize = new System.Drawing.Size(499, 285);
+            this.Controls.Add(this.separatorBevelLineLabel);
             this.Controls.Add(this.overallTickLabel);
+            this.Controls.Add(this.UiThreadsAllowed_label);
+            this.Controls.Add(this.avgOverTimeTicksLabel);
             this.Controls.Add(this.Message_richTextBox);
             this.Controls.Add(this.threads_trackBar);
             this.Controls.Add(this.checkedListBoxRegion);
@@ -120,8 +191,13 @@
         private System.Windows.Forms.CheckedListBox checkedListBoxRegion;
         private System.Windows.Forms.TrackBar threads_trackBar;
         private System.Windows.Forms.RichTextBox Message_richTextBox;
-        private System.Windows.Forms.Label overallTickLabel;
         private System.Windows.Forms.Label avgOverTimeTicksLabel;
+        private System.Windows.Forms.Label UiThreadsAllowed_label;
+        private System.Windows.Forms.ToolTip avgOverTimeTicksLabel_toolTip;
+        private System.Windows.Forms.Label overallTickLabel;
+        private System.Windows.Forms.Label separatorBevelLineLabel;
+        private System.Windows.Forms.ToolTip overallTickLabel_toolTip;
+        private System.Windows.Forms.ToolTip threads_trackBar_toolTip;
     }
 }
 

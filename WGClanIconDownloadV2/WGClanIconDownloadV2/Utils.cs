@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Windows.Forms;
 
 namespace WGClanIconDownload
 {
@@ -91,67 +92,14 @@ namespace WGClanIconDownload
             try { if (e.Data != null) Utils.dumpObjectToLog("Data", e.Data); } catch { };             /// https://msdn.microsoft.com/de-de/library/system.exception.data(v=vs.110).aspx
         }
 
-        static HttpStatusCode GetHttpStatusCode(System.Exception err)              /// https://stackoverflow.com/questions/16387904/how-to-catch-404-webexception-for-webclient-downloadfileasync
-        {
-            if (err is WebException)
-            {
-                WebException we = (WebException)err;
-                if (we.Response is HttpWebResponse)
-                {
-                    HttpWebResponse response = (HttpWebResponse)we.Response;
-                    return response.StatusCode;
-                }
-            }
-            return 0;
-        }
-
         public static string IntToHex(int i)                    /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
         {
-            return i.ToString("X");
+            return "0x"+i.ToString("X4");
         }
 
         public static Int32 HexToInt(string s)                  /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
         {
             return int.Parse(s, System.Globalization.NumberStyles.HexNumber);
-        }
-
-        public static string GetIOException(System.Exception err)
-        {
-            string result = "";
-            if (err.GetBaseException() is IOException)
-            {
-                IOException ioe = (IOException)err.GetBaseException();
-                string hexValue = ioe.HResult.ToString("X");
-                Utils.appendLog("IO Error HResult: " + hexValue);
-                // IOException ioe = (IOException)err;
-                result = "io error";
-                return result;
-            }
-            else if (err is WebException)
-            {
-                WebException we = (WebException)err;
-                if (we.InnerException is System.IO.IOException)
-                {
-
-                    IOException ioe = (IOException)we.InnerException;
-                    Utils.appendLog("ioe.Message: " + ioe.Message);
-                    Utils.appendLog("ioe.GetBaseException: " + ioe.GetBaseException());
-                    Utils.appendLog("ioe.GetBaseException.ToString(): " + ioe.GetBaseException().ToString());
-                    return ioe.ToString();
-                }
-                else
-                {
-                    Utils.appendLog("WebException:" + ((HttpWebResponse)we.Response).StatusCode);
-                }
-                // result = GetHttpStatusCode(err).ToString();
-                return result;
-            }
-            else if (err is Exception)
-            {
-                result = "Exception";
-                return result;
-            }
-            return result;
         }
 
         public IList createList(Type myType)               //  https://stackoverflow.com/questions/2493215/create-list-of-variable-type
@@ -168,21 +116,29 @@ namespace WGClanIconDownload
     {
         // private MemoryStream memstream;
         // private Bitmap bmp;
-
         public static Bitmap FromFile(string filename, bool http)
         {
-            Byte[] buffer = null;
-            if (http)
+            try
             {
-                AwesomeWebClient client = new AwesomeWebClient();
-                buffer = client.DownloadData(filename);
+                Byte[] buffer = null;
+                if (http)
+                {
+                    AwesomeWebClient client = new AwesomeWebClient();
+                    buffer = client.DownloadData(filename);
+                }
+                else
+                {
+                    buffer = File.ReadAllBytes(filename);
+                }
+                MemoryStream memstream = new MemoryStream(buffer);
+                return new Bitmap(memstream);
             }
-            else
+            catch (Exception ex)
             {
-                buffer = File.ReadAllBytes(filename);
+                Utils.exceptionLog("UnlinkedBitmap Bitmap FromFile", ex);
+                return null;
             }
-            MemoryStream memstream = new MemoryStream(buffer);
-            return new Bitmap(memstream);
+            
         }
     }
 

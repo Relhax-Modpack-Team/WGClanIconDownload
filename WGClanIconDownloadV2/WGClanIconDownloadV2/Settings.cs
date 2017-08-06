@@ -53,16 +53,16 @@ namespace WGClanIconDownload
             dataArray.Add(d);
 
             d = new ClassDataArray();
-            d.region = "NA";
+            d.region = "EU";
             d.indexOfDataArray = dataArray.Count;
-            d.url = "worldoftanks.com";
+            d.url = "worldoftanks.eu";
             d.storagePath = Settings.folderStructure.Replace("{reg}", d.region);
             dataArray.Add(d);
 
             d = new ClassDataArray();
-            d.region = "EU";
+            d.region = "NA";
             d.indexOfDataArray = dataArray.Count;
-            d.url = "worldoftanks.eu";
+            d.url = "worldoftanks.com";
             d.storagePath = Settings.folderStructure.Replace("{reg}", d.region);
             dataArray.Add(d);
 
@@ -76,6 +76,7 @@ namespace WGClanIconDownload
         }
     }
 
+    /*
     public class regionData
     {
         public string url { get; set; } = null;
@@ -83,7 +84,7 @@ namespace WGClanIconDownload
         public int countIconDownload { get; set; } = 0;
         public int currentPage { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public string storagePath { get; set; } = null;
-    }
+    }*/
 
     public class clanData
     {
@@ -110,13 +111,17 @@ namespace WGClanIconDownload
         /// </summary>
         public int dlIconsThreads { get; set; } = 0;
         /// <summary>
-        /// this flag is set, if the apiRequester finished his job and reached at least 1 page abouve the calculated page request
-        /// </summary>
-        public bool dlIconsReady { get; set; } = false;
-        /// <summary>
         /// this flag is set true, if user selected it at the Listbox and pressed start
         /// </summary>
         public bool regionToDownload { get; set; } = false;
+        /// <summary>
+        /// this flag is set, if the apiRequester finished his job and reached at least 1 page abouve the calculated page request
+        /// </summary>
+        public bool dlApiDataReady { get; set; } = false;
+        /// <summary>
+        /// this flag is set, if the "UiUpdateWorker_DoWork" checked that all Icons of the region are downloaded
+        /// </summary>
+        public bool dlIconsReady { get; set; } = false;
         public bool regionFinishedMsgDone { get; set; } = false;
         /// <summary>
         /// this flag is set true, if the first "regionHandleWorker_DoWork" is adding a "downloadThreadHandler"
@@ -128,6 +133,8 @@ namespace WGClanIconDownload
         public CustomProgressBar customProgressBar = new CustomProgressBar();
         public Label regionThreadsLabel = new Label();
         public Label dlTicksLabel = new Label();
+        public Label clanDataBufferCountLabel = new Label(); 
+        public PictureBox iconPreview = new PictureBox();
         public ClassDataArray() { }
     }
 
@@ -137,6 +144,7 @@ namespace WGClanIconDownload
         public const int INVALID_HANDLE_VALUE = -1;
 
         public const UInt32 ERROR_SHARING_VIOLATION = 0x80070020;               /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
+        public const int WS_EX_TRANSPARENT = 0x20;
     }
 
     public class EventArgsParameter
@@ -153,8 +161,9 @@ namespace WGClanIconDownload
         public int indexOfDataArray { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int dlIconThreadID { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int fileDlErrorCounter { get; set; } = 0;
-        public List<clanData> downloadList = new List<clanData>();
-        // [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
+        public string lastUsedUrl { get; set; } = "";
+        public List<clanData> downloadList;
+        [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
         public void Dispose()  // Follow the Dispose pattern - public nonvirtual.
         {
             this.Dispose();
@@ -162,3 +171,4 @@ namespace WGClanIconDownload
         }
     }
 }
+ 
