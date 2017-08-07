@@ -12,7 +12,7 @@ namespace WGClanIconDownload
 {
     public class Utils
     {
-        public static Object _locker = new Object();
+        public static Object _lockerLog = new Object();
 
         public static void clearLog()
         {
@@ -31,7 +31,7 @@ namespace WGClanIconDownload
 
         public static void appendLog(string info)
         {
-            lock (_locker)
+            lock (_lockerLog)
             {
                 string currentDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff   ");
                 info = info.Replace("\n", "\n" + string.Concat(Enumerable.Repeat(" ", 26))) + "\n";

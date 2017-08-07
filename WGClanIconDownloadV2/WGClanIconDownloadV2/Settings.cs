@@ -93,10 +93,17 @@ namespace WGClanIconDownload
 
     public class ClassDataArray
     {
+        // *** Lock ***
+        private object _locker = new object();
+
         public string region { get; set; }
         public int indexOfDataArray { get; set; }
         public int total { get; set; } = Constants.INVALID_HANDLE_VALUE;
-        public int currentPage { get; set; } = Constants.INVALID_HANDLE_VALUE;
+        // *** Property ***
+        private int m_currentPage = Constants.INVALID_HANDLE_VALUE;
+        // *** Thread-safe access to Property using locking ***
+        internal int currentPage { get { lock(_locker) { return m_currentPage; } } set { lock(_locker) { m_currentPage = value; } } }
+        // public int currentPage { get; set; } = 
         public int countIconDownload { get; set; } = 0;
         /// <summary>
         /// to store the last readed countIconDownload

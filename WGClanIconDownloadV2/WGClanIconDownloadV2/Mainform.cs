@@ -80,7 +80,7 @@ namespace WGClanIconDownload
                                 parameters.region = (string)checkedListBoxRegion.Items[i];
                                 parameters.indexOfDataArray = dataArray.Find(r => r.region == parameters.region).indexOfDataArray;
                                 parameters.apiRequestWorkerThread = x;
-                                dataArray[parameters.indexOfDataArray].currentPage = 1;
+                                // dataArray[parameters.indexOfDataArray].currentPage = 1;
                                 dataArray[parameters.indexOfDataArray].regionToDownload = true;
                                 apiRequestWorker_start(sender, parameters);
                                 pushParameters.region = parameters.region;
@@ -89,7 +89,7 @@ namespace WGClanIconDownload
                             }
                             dataArray[pushParameters.indexOfDataArray].stopWatch.Start();           /// start stopwatch
                             regionHandleWorker_initializeStart(sender, pushParameters);
-                            create_customProgessBar(pushParameters, t);
+                            create_dynamicElements(pushParameters, t);
                             t++;
                         }
                         int borderWidth = (this.Width - ClientSize.Width) / 2;
@@ -127,7 +127,7 @@ namespace WGClanIconDownload
         public Label overallTickLabel = new System.Windows.Forms.Label();
         public Label separatorBevelLineLabel = new System.Windows.Forms.Label();
         */
-        public void create_customProgessBar(downloadThreadArgsParameter parameters, int t)
+        public void create_dynamicElements(downloadThreadArgsParameter parameters, int t)
         {
             dataArray[parameters.indexOfDataArray].customProgressBar = new CustomProgressBar();
             dataArray[parameters.indexOfDataArray].customProgressBar.Size = new System.Drawing.Size(217, 19);
@@ -165,7 +165,6 @@ namespace WGClanIconDownload
             dataArray[parameters.indexOfDataArray].iconPreview.TabStop = false;
             this.Controls.Add(dataArray[parameters.indexOfDataArray].iconPreview);
 
-
             overallTickLabel.Location = new System.Drawing.Point(281, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top + 32);
             overallTickLabel.Visible = (t > 0);
 
@@ -179,12 +178,11 @@ namespace WGClanIconDownload
             {
                 System.Threading.Timer timer = null;                                // delay 3000 ms https://stackoverflow.com/questions/545533/delayed-function-calls
                 timer = new System.Threading.Timer((obj) =>
-                {
-                    regionHandleWorker_Start(sender, parameters);
-                    timer.Dispose();
-                },
-                            null, 3000, System.Threading.Timeout.Infinite);
-
+                    {
+                        regionHandleWorker_Start(sender, parameters);
+                        timer.Dispose();
+                    },
+                        null, 3000, System.Threading.Timeout.Infinite);
             }
             catch (Exception ex)
             {
@@ -221,7 +219,6 @@ namespace WGClanIconDownload
                 downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Argument;
                 e.Result = parameters;
                 dataArray[parameters.indexOfDataArray].dlIconsThreads = Constants.INVALID_HANDLE_VALUE;
-                // while (dataArray[parameters.indexOfDataArray].clans.Count > 0 && dataArray[parameters.indexOfDataArray].dlIconsThreads != 0)
                 while (!dataArray[parameters.indexOfDataArray].dlIconsReady)
                 {
                     lock (_locker)
@@ -232,7 +229,6 @@ namespace WGClanIconDownload
                         downloadThreadArgsParameter pushParameters = new downloadThreadArgsParameter();
                         pushParameters.region = parameters.region;
                         pushParameters.indexOfDataArray = parameters.indexOfDataArray;
-
                         if ((dataArray[pushParameters.indexOfDataArray].dlIconsThreads < Settings.viaUiThreadsAllowed) && (dataArray[pushParameters.indexOfDataArray].clans.Count > 0))
                         {
                             pushParameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
@@ -240,7 +236,6 @@ namespace WGClanIconDownload
                             dataArray[pushParameters.indexOfDataArray].dlThreadsStarted = true;
                             setNewDownloadEvent = true;
                             if (dataArray[pushParameters.indexOfDataArray].clans.Count < Range) { Range = dataArray[pushParameters.indexOfDataArray].clans.Count; }
-                            // List<clanData> pushParameters.downloadList = new List<clanData>();
                             var oldList = pushParameters.downloadList;
                             pushParameters.downloadList = new List<clanData>();
                             pushParameters.downloadList.AddRange(dataArray[pushParameters.indexOfDataArray].clans.GetRange(0, Range));
@@ -256,7 +251,6 @@ namespace WGClanIconDownload
                     }
                     Thread.Sleep(20);
                 }
-
             }
             catch (Exception ex)
             {
@@ -339,6 +333,7 @@ namespace WGClanIconDownload
 
         void UiUpdateWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            start_button.Enabled = true;
         }
 
         void TickCounterWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -365,8 +360,6 @@ namespace WGClanIconDownload
                     {
                         avgBuffer.Add(t);
                         while (avgBuffer.Count > 60) { avgBuffer.RemoveAt(0); };        // max 60 sec buffer
-                        // int avgDlTicks = ;
-                        // avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgDlTicks / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
                         avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgBuffer.Sum() / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
                     }
                     Thread.Sleep(1000);
@@ -388,10 +381,7 @@ namespace WGClanIconDownload
                 {
                     if (parameters.downloadList.Count == 0 || parameters.downloadList == null)
                     {
-                        lock (_locker)
-                        {
-                            dataArray[parameters.indexOfDataArray].dlIconsThreads--;
-                        }
+                        dataArray[parameters.indexOfDataArray].dlIconsThreads--;
                         return;
                     }
                     else
@@ -457,26 +447,7 @@ namespace WGClanIconDownload
                     }
                     else if (e.Error != null)
                     {
-                        if (e.Error.GetBaseException() is IOException)
-                        {
-                            IOException ioe = (IOException)e.Error.GetBaseException();
-                            if ((UInt32)ioe.HResult == Constants.ERROR_SHARING_VIOLATION)
-                            {
-                                parameters.fileDlErrorCounter = 0;
-                                /// bekanntes Problem mit doppelten Puffern. Ignorieren !!
-                                if (parameters.downloadList.Count > 0)
-                                {
-                                    parameters.downloadList.RemoveAt(0);
-                                    downloadThreadHandler_DoWork(sender, parameters);
-                                }
-                                return;
-                            }
-                            parameters.fileDlErrorCounter++;
-                        }
-                        else
-                        {
-                            parameters.fileDlErrorCounter++;
-                        }
+                        parameters.fileDlErrorCounter++;
                         if (parameters.fileDlErrorCounter > 3)
                         {
                             if (e.Error.GetBaseException() is WebException)
@@ -484,11 +455,11 @@ namespace WGClanIconDownload
                                 WebException we = (WebException)e.Error.GetBaseException();
                                 if (we.Status == WebExceptionStatus.ProtocolError)
                                 {
-                                    Utils.appendLog(string.Format("Error: WebException at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + ")\nStatus: {0}\nDescription: {1}\nlast URL: {2}", Utils.IntToHex((int)we.Status), ((HttpWebResponse)we.Response).StatusDescription, parameters.lastUsedUrl));
+                                    Utils.appendLog(string.Format("Error: WebException at downloadThreadHandler_DownloadFileCompleted ({0})\nStatus: {1}  Description: {2}\nlast URL: {3}", parameters.region, Utils.IntToHex((int)we.Status), ((HttpWebResponse)we.Response).StatusDescription, parameters.lastUsedUrl));
                                 }
                                 else
                                 {
-                                    Utils.appendLog("Error at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + ") Status: " + e.Error.ToString());
+                                    Utils.appendLog("Error: WebException at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + ") Status: " + e.Error.ToString());
                                 }
                             }
                             else
@@ -496,6 +467,7 @@ namespace WGClanIconDownload
                                 Utils.appendLog("Error at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + ") Status: " + e.Error.ToString());
                             }
                             parameters.fileDlErrorCounter = 0;
+                            dataArray[parameters.indexOfDataArray].countIconDownload++;
                             if (parameters.downloadList.Count > 0)
                             {
                                 parameters.downloadList.RemoveAt(0);
@@ -563,12 +535,6 @@ namespace WGClanIconDownload
             }
         }
 
-        /// <summary>
-        /// Time consuming operations go here </br>
-        /// i.e. Database operations,Reporting
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         void apiRequestWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             lock (_locker)
@@ -580,13 +546,15 @@ namespace WGClanIconDownload
                     var indexOfDataArray = parameters.indexOfDataArray;
                     var apiRequestWorkerThread = parameters.apiRequestWorkerThread;
 
-                    int currentPage = 0;
-
-                    currentPage = dataArray[indexOfDataArray].currentPage;
+                    int currentPage = dataArray[indexOfDataArray].currentPage;
+                    if (currentPage == Constants.INVALID_HANDLE_VALUE)
+                    {
+                        currentPage = 1;
+                        dataArray[indexOfDataArray].currentPage = currentPage;
+                    }
                     dataArray[indexOfDataArray].currentPage++;
-
                     string url = string.Format(Settings.wgApiURL, dataArray[indexOfDataArray].url, Settings.wgAppID, Constants.limitApiPageRequest, currentPage);
-
+                    Utils.appendLog(url);
                     //Handle the event for download complete
                     parameters.WebClient = new AwesomeWebClient();
                     parameters.WebClient.DownloadDataCompleted += apiRequestWorker_DownloadDataCompleted;
@@ -660,6 +628,7 @@ namespace WGClanIconDownload
                                         }
                                     }
                                     apiRequestWorker_start(sender, parameters);
+                                    return;
                                 }
                                 else   // es gibt keine Datensätze mehr und das holen der "Pages" ist abgeschlossen.
                                 {
@@ -675,6 +644,11 @@ namespace WGClanIconDownload
                 catch (Exception ex)
                 {
                     Utils.exceptionLog("apiRequestWorker_DownloadDataCompleted", ex);
+                }
+                finally
+                {
+                    if (sender != null)
+                        ((IDisposable)sender).Dispose();
                 }
             }
         }
@@ -713,7 +687,6 @@ namespace WGClanIconDownload
         {
             Settings.viaUiThreadsAllowed = threads_trackBar.Value;
             UiThreadsAllowed_label.Text = "x" + threads_trackBar.Value;
-            // Utils.appendLog("Settings.viaUiThreadsAllowed set to: " + Settings.viaUiThreadsAllowed);
         }
 
         private void checkedListBoxRegion_MouseClick(object sender, MouseEventArgs e)
