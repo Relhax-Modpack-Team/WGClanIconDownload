@@ -127,6 +127,10 @@ namespace WGClanIconDownload
         public bool dlThreadsStarted { get; set; } = false;
         public string url { get; set; } = null;
         public string storagePath { get; set; } = null;
+        /// <summary>
+        /// https://msdn.microsoft.com/de-de/library/system.diagnostics.stopwatch.elapsed(v=vs.110).aspx
+        /// </summary>
+        public Stopwatch stopWatch = new Stopwatch();
         public List<clanData> clans = new List<clanData>();
         public CustomProgressBar customProgressBar = new CustomProgressBar();
         public Label regionThreadsLabel = new Label();

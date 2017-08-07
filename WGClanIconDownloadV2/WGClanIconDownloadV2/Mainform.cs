@@ -23,7 +23,7 @@ namespace WGClanIconDownload
         public Mainform()
         {
             InitializeComponent();
-
+            this.Visible = false;
             threads_trackBar.Value = Settings.viaUiThreadsAllowed;
             int borderWidth = (this.Width - ClientSize.Width) / 2;
             int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
@@ -45,6 +45,7 @@ namespace WGClanIconDownload
                     Utils.appendLog("Directory created => " + fold);
                 }
             }
+            this.Visible = true;
         }
 
         private void start_button_Click(object sender, EventArgs e)
@@ -86,6 +87,7 @@ namespace WGClanIconDownload
                                 pushParameters.indexOfDataArray = parameters.indexOfDataArray;
                                 Utils.appendLog("apiRequest RunWorkerAsync thread region: " + parameters.region + " thread: " + x + " started");
                             }
+                            dataArray[pushParameters.indexOfDataArray].stopWatch.Start();           /// start stopwatch
                             regionHandleWorker_initializeStart(sender, pushParameters);
                             create_customProgessBar(pushParameters, t);
                             t++;
@@ -156,36 +158,14 @@ namespace WGClanIconDownload
             dataArray[parameters.indexOfDataArray].iconPreview = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(dataArray[parameters.indexOfDataArray].iconPreview)).BeginInit();
             dataArray[parameters.indexOfDataArray].iconPreview.AccessibleRole = System.Windows.Forms.AccessibleRole.Cursor;
-            // dataArray[parameters.indexOfDataArray].iconPreview.Location = new System.Drawing.Point(390, 211 + t * 32);
             dataArray[parameters.indexOfDataArray].iconPreview.Location = new System.Drawing.Point(439, 211 + t * 32);
             dataArray[parameters.indexOfDataArray].iconPreview.Margin = new System.Windows.Forms.Padding(0);
             dataArray[parameters.indexOfDataArray].iconPreview.Name = "iconPreview";
             dataArray[parameters.indexOfDataArray].iconPreview.Size = new System.Drawing.Size(32, 32);
-            // dataArray[parameters.indexOfDataArray].iconPreview.TabIndex = 8;
             dataArray[parameters.indexOfDataArray].iconPreview.TabStop = false;
             this.Controls.Add(dataArray[parameters.indexOfDataArray].iconPreview);
 
-            /*
-            overallTickLabel.AutoSize = true;
-            overallTickLabel.BackColor = System.Drawing.Color.Transparent;
-            overallTickLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            overallTickLabel.Location = new System.Drawing.Point(281, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top + 32);
-            overallTickLabel.Name = "overallTickLabel";
-            overallTickLabel.Size = new System.Drawing.Size(75, 17);
-            overallTickLabel.TabIndex = 5;
-            overallTickLabel.Text = "∑ dl/sec: 0";
-            overallTickLabel.Visible = (t > 0);
-            this.Controls.Add(overallTickLabel);
 
-
-            // separator bevel line
-            separatorBevelLineLabel.AutoSize = false;
-            separatorBevelLineLabel.Size = new System.Drawing.Size(95, 2);
-            separatorBevelLineLabel.BorderStyle = BorderStyle.Fixed3D;
-            separatorBevelLineLabel.Location = new System.Drawing.Point(281, overallTickLabel.Top - 3);
-            separatorBevelLineLabel.Visible = overallTickLabel.Visible;
-            this.Controls.Add(separatorBevelLineLabel);
-            */
             overallTickLabel.Location = new System.Drawing.Point(281, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top + 32);
             overallTickLabel.Visible = (t > 0);
 
@@ -261,9 +241,12 @@ namespace WGClanIconDownload
                             setNewDownloadEvent = true;
                             if (dataArray[pushParameters.indexOfDataArray].clans.Count < Range) { Range = dataArray[pushParameters.indexOfDataArray].clans.Count; }
                             // List<clanData> pushParameters.downloadList = new List<clanData>();
+                            var oldList = pushParameters.downloadList;
                             pushParameters.downloadList = new List<clanData>();
                             pushParameters.downloadList.AddRange(dataArray[pushParameters.indexOfDataArray].clans.GetRange(0, Range));
                             dataArray[pushParameters.indexOfDataArray].clans.RemoveRange(0, Range);
+                            if (oldList !=null)
+                                ((IDisposable)oldList).Dispose();
                         }
                         if (setNewDownloadEvent)
                         {
@@ -316,13 +299,14 @@ namespace WGClanIconDownload
                         }
                         if (r.dlApiDataReady == true && r.regionToDownload == true && r.currentPage > lastPage && !r.regionFinishedMsgDone)
                         {
-                            Message_richTextBox.AppendText("finished with the request at WG API Clan data for region " + r.region + "\n");
+                            Message_richTextBox.AppendText(String.Format("finished with the request at WG API Clan data for region {0}\n", r.region));
                             r.regionFinishedMsgDone = true;
                         }
                         if (r.regionToDownload == true && r.dlApiDataReady == true && r.currentPage > lastPage && r.dlIconsThreads == 0 && !r.dlIconsReady == true)
                         {
                             r.dlIconsReady = true;
-                            Message_richTextBox.AppendText("finished with download Clan icons for region " + r.region + "\n");
+                            r.stopWatch.Stop();
+                            Message_richTextBox.AppendText(String.Format("finished with download Clan icons for region {0} (elapsed Time: {1})\n", r.region, Utils.getStopWatchTime(r.stopWatch.Elapsed)));
                         }
                         if (r.total > 0)
                         {
@@ -332,13 +316,12 @@ namespace WGClanIconDownload
                             if (r.customProgressBar.Maximum < countIconDownload) { r.customProgressBar.Maximum = countIconDownload; };
                             r.customProgressBar.Value = countIconDownload;
                             r.regionThreadsLabel.Text = r.dlIconsThreads.ToString();
-                            // r.clanDataBufferCountLabel.Text = r.clans.Count().ToString();
                         }
                     }
                     Thread.Sleep(250);
                     if (finished)
                     {
-                        Message_richTextBox.AppendText("... finished with all downloads of the selected regions.\n");
+                        Message_richTextBox.AppendText("... finished with ALL downloads of the selected regions.\n");
                         TickCounterWorker.CancelAsync();
                         Utils.appendLog("UiUpdateWorker_DoWork finished");
                     }
@@ -381,9 +364,10 @@ namespace WGClanIconDownload
                     if (!(t == 0 && avgBuffer.Count == 0))
                     {
                         avgBuffer.Add(t);
-                        while (avgBuffer.Count > 30) { avgBuffer.RemoveAt(0); };        // max 30 sec buffer
-                        int avgDlTicks = avgBuffer.Sum();
-                        avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgDlTicks / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
+                        while (avgBuffer.Count > 60) { avgBuffer.RemoveAt(0); };        // max 60 sec buffer
+                        // int avgDlTicks = ;
+                        // avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgDlTicks / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
+                        avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgBuffer.Sum() / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
                     }
                     Thread.Sleep(1000);
                 }
@@ -534,7 +518,10 @@ namespace WGClanIconDownload
                         try
                         {
                             string filename = @"" + string.Format(dataArray[parameters.indexOfDataArray].storagePath + @"{0}.png", parameters.downloadList[0].tag);
+                            var oldImage = dataArray[parameters.indexOfDataArray].iconPreview.Image;
                             dataArray[parameters.indexOfDataArray].iconPreview.Image = Image.FromFile(Path.Combine(Settings.baseStorageFolder, filename));
+                            if (oldImage != null)
+                                ((IDisposable)oldImage).Dispose();
                         }
                         catch { }
                         parameters.downloadList.RemoveAt(0);

@@ -42,6 +42,7 @@
             this.overallTickLabel_toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.threads_trackBar_toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.cancel_button = new System.Windows.Forms.Button();
+            this.regionThreadsLabel_toolTip = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.threads_trackBar)).BeginInit();
             this.SuspendLayout();
             // 
@@ -175,6 +176,15 @@
             this.cancel_button.Text = "cancel";
             this.cancel_button.UseVisualStyleBackColor = true;
             // 
+            // regionThreadsLabel_toolTip
+            // 
+            this.regionThreadsLabel_toolTip.AutoPopDelay = 10000;
+            this.regionThreadsLabel_toolTip.InitialDelay = 500;
+            this.regionThreadsLabel_toolTip.ReshowDelay = 100;
+            this.regionThreadsLabel_toolTip.ShowAlways = true;
+            this.regionThreadsLabel_toolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            this.regionThreadsLabel_toolTip.ToolTipTitle = "simultaneous downloads";
+            // 
             // Mainform
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -214,6 +224,7 @@
         private System.Windows.Forms.ToolTip overallTickLabel_toolTip;
         private System.Windows.Forms.ToolTip threads_trackBar_toolTip;
         private System.Windows.Forms.Button cancel_button;
+        private System.Windows.Forms.ToolTip regionThreadsLabel_toolTip;
     }
 }
 

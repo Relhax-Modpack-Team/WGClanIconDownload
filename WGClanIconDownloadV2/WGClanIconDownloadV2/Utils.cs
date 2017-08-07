@@ -18,7 +18,7 @@ namespace WGClanIconDownload
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(Settings.errorLogFile)); 
+                Directory.CreateDirectory(Path.GetDirectoryName(Settings.errorLogFile));
                 File.Create(Settings.errorLogFile).Dispose();
                 appendLog("Log opened. (Time zone: " + DateTime.Now.ToString("\"GMT\" zzz") + ")");
             }
@@ -136,6 +136,18 @@ namespace WGClanIconDownload
                 Utils.exceptionLog("createFileFromBase64String", ex);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// https://msdn.microsoft.com/de-de/library/system.diagnostics.stopwatch.elapsed(v=vs.110).aspx
+        /// </summary>
+        /// <param name="ts">stopWatch.Elapsed</param>
+        /// <returns></returns>
+        public static string getStopWatchTime(TimeSpan ts)
+        {
+            // Format and display the TimeSpan value. (elapsedTime)
+            // return String.Format("{0:00}:{1:00}:{2:00}.{3:00}",ts.Hours, ts.Minutes, ts.Seconds,ts.Milliseconds / 10);
+            return String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds);
         }
     }
 
