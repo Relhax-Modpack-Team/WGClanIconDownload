@@ -84,6 +84,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base64 Newtonsoft.Json.dll.cs" />
+    <Compile Include="TransparentLabel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="CustomProgressBar.cs">
       <SubType>Component</SubType>
     </Compile>

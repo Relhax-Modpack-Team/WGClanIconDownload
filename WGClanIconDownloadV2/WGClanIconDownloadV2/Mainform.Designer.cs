@@ -97,7 +97,7 @@
             // 
             this.avgOverTimeTicksLabel.AutoSize = true;
             this.avgOverTimeTicksLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.avgOverTimeTicksLabel.Location = new System.Drawing.Point(281, 70);
+            this.avgOverTimeTicksLabel.Location = new System.Drawing.Point(281, 75);
             this.avgOverTimeTicksLabel.Name = "avgOverTimeTicksLabel";
             this.avgOverTimeTicksLabel.Size = new System.Drawing.Size(73, 17);
             this.avgOverTimeTicksLabel.TabIndex = 6;

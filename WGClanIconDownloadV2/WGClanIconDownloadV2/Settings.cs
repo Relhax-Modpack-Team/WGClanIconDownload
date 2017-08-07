@@ -3,19 +3,15 @@ using System.IO;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Security.Permissions;
-using ProgressBarWithText;
+using CustomProgressBar;
 using System.Diagnostics;
 
 namespace WGClanIconDownload
 {
     public partial class Settings
     {
-        // public static string baseStorageFolder = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase);
-        // public static string baseStorageFolder = Path.GetDirectoryName(Application.ExecutablePath);
-        // public static string baseStorageFolder = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         public static string baseStorageFolder = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
         public static string errorLogFile = Path.Combine(baseStorageFolder, "logs", "error.log");
-        // public static string errorLogFile = @"C:\Users\Ich\Desktop\ClanDownload.log";
         public static string processLogFile = Path.Combine(baseStorageFolder, "logs", "process.dat");
         public static string folderStructure = @"download\{reg}\res_mods\mods\shared_resources\xvm\res\clanicons\{reg}\clan\";
         public static string wgAppID = "d0bfec3ab1967d9582a73fef7d86ff02";
@@ -74,21 +70,17 @@ namespace WGClanIconDownload
         }
     }
 
-    /*
-    public class regionData
-    {
-        public string url { get; set; } = null;
-        public int total { get; set; } = Constants.INVALID_HANDLE_VALUE;
-        public int countIconDownload { get; set; } = 0;
-        public int currentPage { get; set; } = Constants.INVALID_HANDLE_VALUE;
-        public string storagePath { get; set; } = null;
-    }*/
-
-    public class clanData
+    public class clanData : IDisposable
     {
         public string tag { get; set; } = null;
         public string emblems { get; set; } = null;
         public clanData() { }
+        [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
+        public void Dispose()  // Follow the Dispose pattern - public nonvirtual.
+        {
+            this.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 
     public class ClassDataArray
@@ -100,7 +92,7 @@ namespace WGClanIconDownload
         public int indexOfDataArray { get; set; }
         public int total { get; set; } = Constants.INVALID_HANDLE_VALUE;
         // *** Property ***
-        private int m_currentPage = Constants.INVALID_HANDLE_VALUE;
+        private int m_currentPage = 1;
         // *** Thread-safe access to Property using locking ***
         internal int currentPage { get { lock(_locker) { return m_currentPage; } } set { lock(_locker) { m_currentPage = value; } } }
         // public int currentPage { get; set; } = 
@@ -139,10 +131,9 @@ namespace WGClanIconDownload
         /// </summary>
         public Stopwatch stopWatch = new Stopwatch();
         public List<clanData> clans = new List<clanData>();
-        public CustomProgressBar customProgressBar = new CustomProgressBar();
+        public ProgressBarWithCaptionVista customProgressBar = new ProgressBarWithCaptionVista();
         public Label regionThreadsLabel = new Label();
         public Label dlTicksLabel = new Label();
-        public Label clanDataBufferCountLabel = new Label(); 
         public PictureBox iconPreview = new PictureBox();
         public ClassDataArray() { }
     }
@@ -156,12 +147,18 @@ namespace WGClanIconDownload
         public const int WS_EX_TRANSPARENT = 0x20;
     }
 
-    public class EventArgsParameter
+    public class EventArgsParameter : IDisposable
     {
         public string region { get; set; } = null;
         public int indexOfDataArray { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int apiRequestWorkerThread { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public AwesomeWebClient WebClient { get; set; } = new AwesomeWebClient();
+        [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
+        public void Dispose()  // Follow the Dispose pattern - public nonvirtual.
+        {
+            this.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 
     public class downloadThreadArgsParameter : IDisposable

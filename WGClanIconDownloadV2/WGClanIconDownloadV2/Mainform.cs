@@ -8,14 +8,14 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
-using ProgressBarWithText;
+using CustomProgressBar;
 
 namespace WGClanIconDownload
 {
 
     public partial class Mainform : Form
     {
-        public List<ClassDataArray> dataArray = new List<ClassDataArray>() { };
+        public List<ClassDataArray> dataArray;
         public BackgroundWorker UiUpdateWorker;
         public BackgroundWorker TickCounterWorker;
         public Object _locker = new Object();
@@ -23,15 +23,25 @@ namespace WGClanIconDownload
         public Mainform()
         {
             InitializeComponent();
+            addCustomElementsToMainForm();
+            this.Visible = true;
+        }
+
+        private void addCustomElementsToMainForm()
+        {
             this.Visible = false;
             threads_trackBar.Value = Settings.viaUiThreadsAllowed;
             int borderWidth = (this.Width - ClientSize.Width) / 2;
             int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
             this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + checkedListBoxRegion.Top;
 
+            if (dataArray != null)
+                ((IDisposable)dataArray).Dispose();
             // add data to dataArray
+            dataArray = new List<ClassDataArray>() { };
             dataArray = Settings.fillDataArray();
 
+            checkedListBoxRegion.Items.Clear();
             // durchlaufe alle Regionen
             foreach (var item in dataArray)
             {
@@ -45,14 +55,12 @@ namespace WGClanIconDownload
                     Utils.appendLog("Directory created => " + fold);
                 }
             }
-            this.Visible = true;
         }
 
         private void start_button_Click(object sender, EventArgs e)
         {
             try
             {
-                // Utils.appendLog("buttonStart_Click");
                 if (checkedListBoxRegion.Items.Count > 0)
                 {
                     Message_richTextBox.AppendText("started request at WG API for Clan data ...\n");
@@ -80,7 +88,6 @@ namespace WGClanIconDownload
                                 parameters.region = (string)checkedListBoxRegion.Items[i];
                                 parameters.indexOfDataArray = dataArray.Find(r => r.region == parameters.region).indexOfDataArray;
                                 parameters.apiRequestWorkerThread = x;
-                                // dataArray[parameters.indexOfDataArray].currentPage = 1;
                                 dataArray[parameters.indexOfDataArray].regionToDownload = true;
                                 apiRequestWorker_start(sender, parameters);
                                 pushParameters.region = parameters.region;
@@ -95,15 +102,11 @@ namespace WGClanIconDownload
                         int borderWidth = (this.Width - ClientSize.Width) / 2;
                         int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
                         this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + (t + (overallTickLabel.Visible ? 1 : 0)) * 32 + checkedListBoxRegion.Top;  /// set the new Height of the Mainform
-
-
-                        /// this.Height = Message_richTextBox.Top+Message_richTextBox.Height  + checkedListBoxRegion.Top;                   
                     }
                     UiUpdateWorker = new BackgroundWorker();
                     UiUpdateWorker.DoWork += new DoWorkEventHandler(UiUpdateWorker_DoWork);
-                    UiUpdateWorker.ProgressChanged += new ProgressChangedEventHandler(UiUpdateWorker_ProgressChanged);
                     UiUpdateWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(UiUpdateWorker_RunWorkerCompleted);
-                    UiUpdateWorker.WorkerReportsProgress = true;
+                    UiUpdateWorker.WorkerReportsProgress = false;
                     UiUpdateWorker.WorkerSupportsCancellation = true;
                     UiUpdateWorker.RunWorkerAsync();
 
@@ -123,13 +126,10 @@ namespace WGClanIconDownload
                 Utils.exceptionLog("start_button_Click", ex);
             }
         }
-        /*
-        public Label overallTickLabel = new System.Windows.Forms.Label();
-        public Label separatorBevelLineLabel = new System.Windows.Forms.Label();
-        */
+
         public void create_dynamicElements(downloadThreadArgsParameter parameters, int t)
         {
-            dataArray[parameters.indexOfDataArray].customProgressBar = new CustomProgressBar();
+            dataArray[parameters.indexOfDataArray].customProgressBar = new ProgressBarWithCaptionVista();
             dataArray[parameters.indexOfDataArray].customProgressBar.Size = new System.Drawing.Size(217, 19);
             dataArray[parameters.indexOfDataArray].customProgressBar.Maximum = 1;
             dataArray[parameters.indexOfDataArray].customProgressBar.Minimum = 0;
@@ -327,13 +327,59 @@ namespace WGClanIconDownload
             }
         }
 
-        void UiUpdateWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-        }
-
         void UiUpdateWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            start_button.Enabled = true;
+            try
+            {
+                start_button.Enabled = true;
+                UiUpdateWorker.Dispose();
+                TickCounterWorker.Dispose();
+
+                // addCustomElementsToMainForm();
+                // 
+                foreach (var r in dataArray)
+                {
+                    if (r.regionToDownload)
+                    {
+                        r.countIconDownload = 0;
+                        r.clans.Clear();
+                        r.currentPage = 1;
+                        r.customProgressBar = null;
+                        r.dlApiDataReady = false;
+                        r.dlErrorCounter = 0;
+                        r.dlIconsReady = false;
+                        r.dlIconsThreads = 0;
+                        r.dlThreadsStarted = false;
+                        r.dlTickBuffer = 0;
+                        r.regionFinishedMsgDone = false;
+                        r.regionToDownload = false;
+                        r.stopWatch.Reset();
+                        r.total = Constants.INVALID_HANDLE_VALUE;
+                        // ((IDisposable)r.customProgressBar).Dispose();
+                        // r.customProgressBar
+                        this.Controls.Remove(r.customProgressBar);
+                        this.Controls.Remove(r.regionThreadsLabel);
+                        this.Controls.Remove(r.iconPreview);
+                        this.Controls.Remove(r.dlTicksLabel);
+                        if (r.customProgressBar !=null)
+                            r.customProgressBar.Dispose();
+                        if (r.regionThreadsLabel != null)
+                            r.regionThreadsLabel.Dispose();
+                        r.regionThreadsLabel = new Label();
+                        if (r.iconPreview != null)
+                            r.iconPreview.Dispose();
+                        r.iconPreview = new PictureBox();
+                        if (r.dlTicksLabel != null)
+                            r.dlTicksLabel.Dispose();
+
+                    
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            Utils.exceptionLog("UiUpdateWorker_RunWorkerCompleted", ex);
+            }
         }
 
         void TickCounterWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -359,7 +405,7 @@ namespace WGClanIconDownload
                     if (!(t == 0 && avgBuffer.Count == 0))
                     {
                         avgBuffer.Add(t);
-                        while (avgBuffer.Count > 60) { avgBuffer.RemoveAt(0); };        // max 60 sec buffer
+                        while (avgBuffer.Count > 10) { avgBuffer.RemoveAt(0); };        // max 60 sec buffer
                         avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgBuffer.Sum() / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
                     }
                     Thread.Sleep(1000);
@@ -547,14 +593,8 @@ namespace WGClanIconDownload
                     var apiRequestWorkerThread = parameters.apiRequestWorkerThread;
 
                     int currentPage = dataArray[indexOfDataArray].currentPage;
-                    if (currentPage == Constants.INVALID_HANDLE_VALUE)
-                    {
-                        currentPage = 1;
-                        dataArray[indexOfDataArray].currentPage = currentPage;
-                    }
                     dataArray[indexOfDataArray].currentPage++;
                     string url = string.Format(Settings.wgApiURL, dataArray[indexOfDataArray].url, Settings.wgAppID, Constants.limitApiPageRequest, currentPage);
-                    Utils.appendLog(url);
                     //Handle the event for download complete
                     parameters.WebClient = new AwesomeWebClient();
                     parameters.WebClient.DownloadDataCompleted += apiRequestWorker_DownloadDataCompleted;
