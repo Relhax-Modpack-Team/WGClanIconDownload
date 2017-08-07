@@ -92,7 +92,7 @@ namespace WGClanIconDownload
         public int indexOfDataArray { get; set; }
         public int total { get; set; } = Constants.INVALID_HANDLE_VALUE;
         // *** Property ***
-        private int m_currentPage = 1;
+        private int m_currentPage = 60;
         // *** Thread-safe access to Property using locking ***
         internal int currentPage { get { lock(_locker) { return m_currentPage; } } set { lock(_locker) { m_currentPage = value; } } }
         // public int currentPage { get; set; } = 

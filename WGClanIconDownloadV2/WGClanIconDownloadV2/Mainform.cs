@@ -23,18 +23,25 @@ namespace WGClanIconDownload
         public Mainform()
         {
             InitializeComponent();
+            this.Visible = false;
+
+            threads_trackBar.Value = Settings.viaUiThreadsAllowed;
+
+            setMainformSmallHeight();
             addCustomElementsToMainForm();
             this.Visible = true;
         }
 
-        private void addCustomElementsToMainForm()
+        private void setMainformSmallHeight()
         {
-            this.Visible = false;
-            threads_trackBar.Value = Settings.viaUiThreadsAllowed;
+            
             int borderWidth = (this.Width - ClientSize.Width) / 2;
             int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
             this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + checkedListBoxRegion.Top;
+        }
 
+        private void addCustomElementsToMainForm()
+        {
             if (dataArray != null)
                 ((IDisposable)dataArray).Dispose();
             // add data to dataArray
@@ -75,6 +82,7 @@ namespace WGClanIconDownload
                             //The Cancel button is enabled so that the user can stop the operation 
                             //at any point of time during the execution
                             start_button.Enabled = false;
+                            checkedListBoxRegion.Enabled = false;
                             /// https://stackoverflow.com/questions/10694271/c-sharp-multiple-backgroundworkers 
                             /// Create a background worker thread that ReportsProgress &
                             /// SupportsCancellation
@@ -196,7 +204,7 @@ namespace WGClanIconDownload
             {
                 try
                 {
-                    Message_richTextBox.AppendText("started downloading of Clan Icons in region " + parameters.region + " ...\n");
+                    Message_richTextBox.AppendText("started downloading of Clanicons in Region " + parameters.region + " ...\n");
                     BackgroundWorker regionHandleWorker = new BackgroundWorker();
                     regionHandleWorker.DoWork += new DoWorkEventHandler(regionHandleWorker_DoWork);
                     regionHandleWorker.ProgressChanged += new ProgressChangedEventHandler(regionHandleWorker_ProgressChanged);
@@ -207,7 +215,7 @@ namespace WGClanIconDownload
                 }
                 catch (Exception ex)
                 {
-                    Utils.exceptionLog(string.Format("regionHandleWorker_Start:\nregion:{0}", parameters.region), ex);
+                    Utils.exceptionLog(string.Format("regionHandleWorker_Start:\nRegion:{0}", parameters.region), ex);
                 }
             }
         }
@@ -256,7 +264,6 @@ namespace WGClanIconDownload
             {
                 Utils.exceptionLog("regionHandleWorker_DoWork", ex);
             }
-
         }
 
         void regionHandleWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -267,8 +274,18 @@ namespace WGClanIconDownload
         {
             try
             {
-                downloadThreadArgsParameter parameters = (downloadThreadArgsParameter)e.Result;
-                Utils.appendLog("regionHandleWorker " + parameters.region + " stopped");
+                downloadThreadArgsParameter parameters = e.Result as downloadThreadArgsParameter;
+
+                BackgroundWorker worker = sender as BackgroundWorker;
+                if (worker != null)
+                {
+                    worker.WorkerReportsProgress = false;
+                    worker.DoWork -= regionHandleWorker_DoWork;
+                    worker.ProgressChanged -= regionHandleWorker_ProgressChanged;
+                    worker.RunWorkerCompleted -= regionHandleWorker_RunWorkerCompleted;
+                    worker.Dispose();
+                }
+                Utils.appendLog("regionHandleWorker " + parameters.region + " finished");
             }
             catch (Exception ex)
             {
@@ -300,7 +317,7 @@ namespace WGClanIconDownload
                         {
                             r.dlIconsReady = true;
                             r.stopWatch.Stop();
-                            Message_richTextBox.AppendText(String.Format("finished with download Clan icons for region {0} (elapsed Time: {1})\n", r.region, Utils.getStopWatchTime(r.stopWatch.Elapsed)));
+                            Message_richTextBox.AppendText(String.Format("finished with download of {0} Clanicons for Region {1} (elapsed Time: {2})\n", r.countIconDownload, r.region, Utils.getStopWatchTime(r.stopWatch.Elapsed)));
                         }
                         if (r.total > 0)
                         {
@@ -315,7 +332,7 @@ namespace WGClanIconDownload
                     Thread.Sleep(250);
                     if (finished)
                     {
-                        Message_richTextBox.AppendText("... finished with ALL downloads of the selected regions.\n");
+                        Message_richTextBox.AppendText("... finished with ALL downloads of the selected Regions.\n");
                         TickCounterWorker.CancelAsync();
                         Utils.appendLog("UiUpdateWorker_DoWork finished");
                     }
@@ -331,12 +348,13 @@ namespace WGClanIconDownload
         {
             try
             {
+                setMainformSmallHeight();
+                checkedListBoxRegion.Enabled = true;
                 start_button.Enabled = true;
+
                 UiUpdateWorker.Dispose();
                 TickCounterWorker.Dispose();
 
-                // addCustomElementsToMainForm();
-                // 
                 foreach (var r in dataArray)
                 {
                     if (r.regionToDownload)
@@ -344,7 +362,6 @@ namespace WGClanIconDownload
                         r.countIconDownload = 0;
                         r.clans.Clear();
                         r.currentPage = 1;
-                        r.customProgressBar = null;
                         r.dlApiDataReady = false;
                         r.dlErrorCounter = 0;
                         r.dlIconsReady = false;
@@ -355,14 +372,13 @@ namespace WGClanIconDownload
                         r.regionToDownload = false;
                         r.stopWatch.Reset();
                         r.total = Constants.INVALID_HANDLE_VALUE;
-                        // ((IDisposable)r.customProgressBar).Dispose();
-                        // r.customProgressBar
                         this.Controls.Remove(r.customProgressBar);
                         this.Controls.Remove(r.regionThreadsLabel);
                         this.Controls.Remove(r.iconPreview);
                         this.Controls.Remove(r.dlTicksLabel);
                         if (r.customProgressBar !=null)
                             r.customProgressBar.Dispose();
+                        r.customProgressBar = new ProgressBarWithCaptionVista();
                         if (r.regionThreadsLabel != null)
                             r.regionThreadsLabel.Dispose();
                         r.regionThreadsLabel = new Label();
@@ -371,14 +387,14 @@ namespace WGClanIconDownload
                         r.iconPreview = new PictureBox();
                         if (r.dlTicksLabel != null)
                             r.dlTicksLabel.Dispose();
-
-                    
+                        r.dlTicksLabel = new Label();
                     }
                 }
+                Utils.appendLog("UiUpdateWorker_RunWorkerCompleted finished");
             }
             catch (Exception ex)
             {
-            Utils.exceptionLog("UiUpdateWorker_RunWorkerCompleted", ex);
+                Utils.exceptionLog("UiUpdateWorker_RunWorkerCompleted", ex);
             }
         }
 
@@ -658,7 +674,7 @@ namespace WGClanIconDownload
                                         }
                                         else if (Settings.prohibitedFilenames.Contains(c.tag))
                                         {
-                                            Message_richTextBox.AppendText("found prohibited filename " + c.tag + " at region " + parameters.region + " (no Icon possible)\n");
+                                            Message_richTextBox.AppendText("found prohibited filename " + c.tag + " at Region " + parameters.region + " (no Icon possible)\n");
                                             Utils.appendLog("Error: found prohibited filename => " + c.tag + " (" + parameters.region + ")");
                                             dataArray[parameters.indexOfDataArray].countIconDownload++;
                                         }
@@ -673,7 +689,7 @@ namespace WGClanIconDownload
                                 else   // es gibt keine Datensätze mehr und das holen der "Pages" ist abgeschlossen.
                                 {
                                     dataArray[parameters.indexOfDataArray].dlApiDataReady = true;
-                                    Utils.appendLog("apiRequestWorker thread " + parameters.apiRequestWorkerThread + " finished with region: " + parameters.region);
+                                    Utils.appendLog("apiRequestWorker thread " + parameters.apiRequestWorkerThread + " finished with Region: " + parameters.region);
                                 }
                                 return;
                             }
@@ -720,6 +736,24 @@ namespace WGClanIconDownload
             catch (Exception ex)
             {
                 Utils.exceptionLog("apiRequestWorker_RunWorkerCompleted", ex);
+            }
+            finally
+            {
+                try
+                {
+                    BackgroundWorker worker = sender as BackgroundWorker;
+                    if (worker != null)
+                    {
+                        worker.DoWork -= apiRequestWorker_DoWork;
+                        worker.ProgressChanged -= apiRequestWorker_ProgressChanged;
+                        worker.RunWorkerCompleted -= apiRequestWorker_RunWorkerCompleted;
+                        worker.Dispose();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Utils.exceptionLog("apiRequestWorker_RunWorkerCompleted finally", ex);
+                }
             }
         }
 
