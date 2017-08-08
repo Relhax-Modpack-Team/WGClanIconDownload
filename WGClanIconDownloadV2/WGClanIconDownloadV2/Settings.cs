@@ -33,6 +33,7 @@ namespace WGClanIconDownload
             "wot","portal","wowp"
         };
         public static int viaUiThreadsAllowed = 10;
+
         public static bool downloadPause = false;
         public static bool downloadCancel = false;
         
