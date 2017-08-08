@@ -168,13 +168,13 @@
             // 
             // cancel_button
             // 
-            this.cancel_button.Enabled = false;
             this.cancel_button.Location = new System.Drawing.Point(374, 44);
             this.cancel_button.Name = "cancel_button";
             this.cancel_button.Size = new System.Drawing.Size(97, 26);
             this.cancel_button.TabIndex = 10;
-            this.cancel_button.Text = "Cancel";
+            this.cancel_button.Text = "Quit";
             this.cancel_button.UseVisualStyleBackColor = true;
+            this.cancel_button.Click += new System.EventHandler(this.cancel_button_Click);
             // 
             // regionThreadsLabel_toolTip
             // 

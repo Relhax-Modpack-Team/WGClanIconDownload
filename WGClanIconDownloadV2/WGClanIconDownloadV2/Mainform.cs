@@ -34,7 +34,7 @@ namespace WGClanIconDownload
 
         private void setMainformSmallHeight()
         {
-            
+
             int borderWidth = (this.Width - ClientSize.Width) / 2;
             int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
             this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + checkedListBoxRegion.Top;
@@ -76,9 +76,27 @@ namespace WGClanIconDownload
                 MessageBox.Show("Function not recogniced", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
+        private void cancel_button_Click(object sender, EventArgs e)
+        {
+            if (cancel_button.Text.Equals(Constants.cancel_button_text_cancel))
+                downloadCancel(sender, e);
+            else if (cancel_button.Text.Equals(Constants.cancel_button_text_quit))
+                programQuit(sender, e);
+            else
+                MessageBox.Show("Function not recogniced", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void downloadCancel(object sender, EventArgs e)
+        {
+            Message_richTextBox.AppendText("User command: cancel ALL downloads\n");
+            Utils.appendLog("User command: all downloads will be stopped");
+            Settings.downloadCancel = true;
+        }
+
         private void downloadPause(object sender, EventArgs e)
         {
-            Message_richTextBox.AppendText("all downloads will be paused\n");
+            Message_richTextBox.AppendText("User command: all downloads will be paused\n");
+            Utils.appendLog("User command: all downloads will be paused");
             start_button.Text = Constants.start_button_text_resume;
             Settings.downloadPause = true;
         }
@@ -86,7 +104,10 @@ namespace WGClanIconDownload
         private void downloadResume(object sender, EventArgs e)
         {
             if (UiUpdateWorker != sender)
-                Message_richTextBox.AppendText("all downloads will be started again\n");
+            {
+                Message_richTextBox.AppendText("User command: all downloads will be started again\n");
+                Utils.appendLog("User command: all downloads will be started again");
+            }
             start_button.Text = Constants.start_button_text_pause;
             Settings.downloadPause = false;
         }
@@ -136,7 +157,6 @@ namespace WGClanIconDownload
                         int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
                         this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + (t + (overallTickLabel.Visible ? 1 : 0)) * 32 + checkedListBoxRegion.Top;  /// set the new Height of the Mainform
                     }
-                    cancel_button.Enabled = true;
                     cancel_button.Text = Constants.cancel_button_text_cancel;
                     checkedListBoxRegion.Enabled = false;
                     start_button.Text = Constants.start_button_text_pause;
@@ -220,7 +240,7 @@ namespace WGClanIconDownload
                         regionHandleWorker_Start(sender, parameters);
                         timer.Dispose();
                     },
-                        null, 3000, System.Threading.Timeout.Infinite);
+                        null, 500, System.Threading.Timeout.Infinite);
             }
             catch (Exception ex)
             {
@@ -239,18 +259,24 @@ namespace WGClanIconDownload
             {
                 try
                 {
+                    if (Settings.downloadCancel)
+                    {
+                        Utils.appendLog(string.Format("try to stop regionHandleWorker {0}", parameters.region));
+                        dataArray[parameters.indexOfDataArray].clans.Clear();
+                        return;
+                    }
+
                     Message_richTextBox.AppendText("started downloading of Clanicons in Region " + parameters.region + " ...\n");
                     BackgroundWorker regionHandleWorker = new BackgroundWorker();
                     regionHandleWorker.DoWork += new DoWorkEventHandler(regionHandleWorker_DoWork);
-                    regionHandleWorker.ProgressChanged += new ProgressChangedEventHandler(regionHandleWorker_ProgressChanged);
                     regionHandleWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(regionHandleWorker_RunWorkerCompleted);
-                    regionHandleWorker.WorkerReportsProgress = true;
+                    regionHandleWorker.WorkerReportsProgress = false;
                     regionHandleWorker.WorkerSupportsCancellation = true;
                     regionHandleWorker.RunWorkerAsync(parameters);
                 }
                 catch (Exception ex)
                 {
-                    Utils.exceptionLog(string.Format("regionHandleWorker_Start:\nRegion:{0}", parameters.region), ex);
+                    Utils.exceptionLog(string.Format("regionHandleWorker_Start Region:{0}", parameters.region), ex);
                 }
             }
         }
@@ -277,7 +303,7 @@ namespace WGClanIconDownload
                         downloadThreadArgsParameter pushParameters = new downloadThreadArgsParameter();
                         pushParameters.region = parameters.region;
                         pushParameters.indexOfDataArray = parameters.indexOfDataArray;
-                        if ((dataArray[pushParameters.indexOfDataArray].dlIconsThreads < Settings.viaUiThreadsAllowed) && (dataArray[pushParameters.indexOfDataArray].clans.Count > 0))
+                        if ((dataArray[pushParameters.indexOfDataArray].dlIconsThreads < Settings.viaUiThreadsAllowed) && (dataArray[pushParameters.indexOfDataArray].clans.Count > 0) && !Settings.downloadCancel)
                         {
                             pushParameters.dlIconThreadID = Settings.viaUiThreadsAllowed;
                             dataArray[pushParameters.indexOfDataArray].dlIconsThreads++;
@@ -288,7 +314,7 @@ namespace WGClanIconDownload
                             pushParameters.downloadList = new List<clanData>();
                             pushParameters.downloadList.AddRange(dataArray[pushParameters.indexOfDataArray].clans.GetRange(0, Range));
                             dataArray[pushParameters.indexOfDataArray].clans.RemoveRange(0, Range);
-                            if (oldList !=null)
+                            if (oldList != null)
                                 ((IDisposable)oldList).Dispose();
                         }
                         if (setNewDownloadEvent)
@@ -299,15 +325,15 @@ namespace WGClanIconDownload
                     }
                     Thread.Sleep(20);
                 }
+                if (Settings.downloadCancel)
+                {
+                    Utils.appendLog(string.Format("successfully stopped regionHandleWorker {0}", parameters.region));
+                }
             }
             catch (Exception ex)
             {
                 Utils.exceptionLog("regionHandleWorker_DoWork", ex);
             }
-        }
-
-        void regionHandleWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
         }
 
         void regionHandleWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -321,7 +347,6 @@ namespace WGClanIconDownload
                 {
                     worker.WorkerReportsProgress = false;
                     worker.DoWork -= regionHandleWorker_DoWork;
-                    worker.ProgressChanged -= regionHandleWorker_ProgressChanged;
                     worker.RunWorkerCompleted -= regionHandleWorker_RunWorkerCompleted;
                     worker.Dispose();
                 }
@@ -341,23 +366,28 @@ namespace WGClanIconDownload
                 while (!finished)
                 {
                     finished = true;
-                    foreach (var r in dataArray)
+
+                    foreach (var r in dataArray.Where(x => x.regionToDownload))
                     {
                         int lastPage = (int)(Math.Ceiling((decimal)r.total / (decimal)Constants.limitApiPageRequest));
-                        if (r.regionToDownload == true && (r.total == Constants.INVALID_HANDLE_VALUE || r.dlIconsThreads != 0 || r.total > 0 && !r.dlThreadsStarted))     // if any region is NOT finished, do not close the UiUpdateWorker
+                        if (!Settings.downloadCancel && (r.total == Constants.INVALID_HANDLE_VALUE || r.dlIconsThreads != 0 || r.total > 0 && !r.dlThreadsStarted))     // if any region is NOT finished, do not close the UiUpdateWorker
                         {
                             finished = false;
                         }
-                        if (r.dlApiDataReady == true && r.regionToDownload == true && r.currentPage > lastPage && !r.regionFinishedMsgDone)
+                        if (Settings.downloadCancel && (r.dlIconsThreads != 0 || !r.dlApiDataReady || !r.dlIconsReady))
                         {
-                            Message_richTextBox.AppendText(String.Format("finished with the request at WG API Clan data for region {0}\n", r.region));
-                            r.regionFinishedMsgDone = true;
+                            finished = false;
                         }
-                        if (r.regionToDownload == true && r.dlApiDataReady == true && r.currentPage > lastPage && r.dlIconsThreads == 0 && !r.dlIconsReady == true)
+                        if (r.dlApiDataReady == true && r.currentPage > lastPage && !r.regionFinishedMsgDone && !Settings.downloadCancel)
+                        {
+                            r.regionFinishedMsgDone = true;
+                            Message_richTextBox.AppendText(String.Format("finished with the request at WG API Clan data for Region {0}\n", r.region));
+                        }
+                        if (r.dlApiDataReady == true && r.currentPage > lastPage && r.dlIconsThreads == 0 && !r.dlIconsReady == true && !Settings.downloadCancel)
                         {
                             r.dlIconsReady = true;
                             r.stopWatch.Stop();
-                            Message_richTextBox.AppendText(String.Format("finished with download of {0} Clanicons for Region {1} (elapsed Time: {2})\n", r.countIconDownload, r.region, Utils.getStopWatchTime(r.stopWatch.Elapsed)));
+                            Message_richTextBox.AppendText(String.Format("finished with download of {0} Clanicon for Region {1} (elapsed Time: {2})\n", r.countIconDownload, r.region, Utils.getStopWatchTime(r.stopWatch.Elapsed)));
                         }
                         if (r.total > 0)
                         {
@@ -368,14 +398,28 @@ namespace WGClanIconDownload
                             r.customProgressBar.Value = countIconDownload;
                             r.regionThreadsLabel.Text = r.dlIconsThreads.ToString();
                         }
+                        if (Settings.downloadCancel && r.dlApiDataReady == true && !r.regionFinishedMsgDone)
+                        {
+                            r.regionFinishedMsgDone = true;
+                            Message_richTextBox.AppendText((string.Format("successfully stopped requests at WG API data for Region {0}\n", r.region)));
+                        }
+                        if (Settings.downloadCancel && r.dlApiDataReady == true && r.dlIconsThreads == 0 && !r.dlIconsReady == true)   // && r.currentPage > lastPage
+                        {
+                            r.dlIconsReady = true;
+                            r.stopWatch.Stop();
+                            Message_richTextBox.AppendText((string.Format("successfully stopped Clanicon downloads for Region {0}\n", r.region)));
+                        }
                     }
-                    Thread.Sleep(250);
                     if (finished)
                     {
-                        Message_richTextBox.AppendText("... finished with ALL downloads of the selected Regions.\n");
+                        if (Settings.downloadCancel)
+                            Message_richTextBox.AppendText("... canceled ALL downloads at all Regions.\n");
+                        else
+                            Message_richTextBox.AppendText("... finished with ALL downloads of the selected Regions.\n");
                         TickCounterWorker.CancelAsync();
                         Utils.appendLog("UiUpdateWorker_DoWork finished");
                     }
+                    Thread.Sleep(250);
                 }
             }
             catch (Exception ex)
@@ -389,11 +433,11 @@ namespace WGClanIconDownload
             try
             {
                 downloadResume(sender, null);               // if this function is called (even with at a user pause event) the complete download is already finished, so it must be cleared
+                Settings.downloadCancel = false;            // if this function is called (even with at a user pause event) the complete download is already finished, so it must be cleared
                 setMainformSmallHeight();
                 checkedListBoxRegion.Enabled = true;
                 start_button.Text = Constants.start_button_text_start;
-                start_button.Enabled = true;
-                cancel_button.Enabled = false;
+                cancel_button.Text = Constants.cancel_button_text_quit;
 
                 UiUpdateWorker.Dispose();
                 TickCounterWorker.Dispose();
@@ -419,7 +463,7 @@ namespace WGClanIconDownload
                         this.Controls.Remove(r.regionThreadsLabel);
                         this.Controls.Remove(r.iconPreview);
                         this.Controls.Remove(r.dlTicksLabel);
-                        if (r.customProgressBar !=null)
+                        if (r.customProgressBar != null)
                             r.customProgressBar.Dispose();
                         r.customProgressBar = new ProgressBarWithCaptionVista();
                         if (r.regionThreadsLabel != null)
@@ -483,6 +527,11 @@ namespace WGClanIconDownload
                 Thread.Sleep(100);
             }
 
+            if (Settings.downloadCancel)
+            {
+                parameters.downloadList.Clear();
+            }
+
             lock (_locker)
             {
                 string emblems = "";
@@ -492,7 +541,6 @@ namespace WGClanIconDownload
                     if (parameters.downloadList.Count == 0 || parameters.downloadList == null)
                     {
                         dataArray[parameters.indexOfDataArray].dlIconsThreads--;
-                        return;
                     }
                     else
                     {
@@ -591,6 +639,10 @@ namespace WGClanIconDownload
                             return;
                         }
                     }
+                    else if (Settings.downloadCancel)
+                    {
+                        // no new download thread starting
+                    }
                     else
                     {
                         parameters.fileDlErrorCounter = 0;          // download hat funktioniert, daher Zähler auf 0.
@@ -635,9 +687,16 @@ namespace WGClanIconDownload
             {
                 try
                 {
+                    if (Settings.downloadCancel)
+                    {
+                        Utils.appendLog(string.Format("successfully stopped apiRequestWorker {0} ({1})", parameters.region, parameters.apiRequestWorkerThread));
+                        dataArray[parameters.indexOfDataArray].currentPage = (dataArray[parameters.indexOfDataArray].total / Constants.limitApiPageRequest) + 2;
+                        dataArray[parameters.indexOfDataArray].dlApiDataReady = true;
+                        return;
+                    }
+
                     BackgroundWorker apiRequestWorker = new BackgroundWorker();
                     apiRequestWorker.DoWork += new DoWorkEventHandler(apiRequestWorker_DoWork);
-                    // apiRequestWorker.ProgressChanged += new ProgressChangedEventHandler(apiRequestWorker_ProgressChanged);
                     apiRequestWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(apiRequestWorker_RunWorkerCompleted);
                     apiRequestWorker.WorkerReportsProgress = false;
                     apiRequestWorker.WorkerSupportsCancellation = true;
@@ -669,7 +728,7 @@ namespace WGClanIconDownload
                     parameters.WebClient.DownloadDataCompleted += apiRequestWorker_DownloadDataCompleted;
                     // push any new information to the next working step
                     e.Result = parameters;
-                    //Start downloading file
+                    // Start downloading file
                     parameters.WebClient.DownloadDataAsync(new Uri(url), parameters);
                 }
                 catch (Exception ex)
@@ -679,17 +738,13 @@ namespace WGClanIconDownload
             }
         }
 
-        // void apiRequestWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        // {
-        // }
-
         void apiRequestWorker_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
             lock (_locker)
             {
                 try
                 {
-                    EventArgsParameter parameters = (EventArgsParameter)e.UserState;       // the 'argument' parameter resurfaces here
+                    EventArgsParameter parameters = (EventArgsParameter)e.UserState;
                     parameters.WebClient.DownloadDataCompleted -= apiRequestWorker_DownloadDataCompleted;
 
                     if (e.Error != null)
@@ -697,10 +752,16 @@ namespace WGClanIconDownload
                         Utils.appendLog("Error: download failed\n" + e.Error.ToString());
                         apiRequestWorker_start(sender, parameters);
                     }
+                    else if(Settings.downloadCancel)
+                    {
+                        Utils.appendLog((string.Format("successfully stopped apiRequestWorker {0} ({1})", parameters.region, parameters.apiRequestWorkerThread)));
+                        dataArray[parameters.indexOfDataArray].dlApiDataReady = true;
+                        // pass the funtion if "downloadCancel" is true
+                    }
                     else
                     {
                         string result = System.Text.Encoding.UTF8.GetString(e.Result);
-                        //Get the data of the file
+                        //Get the data of the object
                         dynamic resultPageApiJson = JsonConvert.DeserializeObject(result);
                         if (resultPageApiJson != null)
                         {
@@ -798,7 +859,6 @@ namespace WGClanIconDownload
                     if (worker != null)
                     {
                         worker.DoWork -= apiRequestWorker_DoWork;
-                        // worker.ProgressChanged -= apiRequestWorker_ProgressChanged;
                         worker.RunWorkerCompleted -= apiRequestWorker_RunWorkerCompleted;
                         worker.Dispose();
                     }
@@ -844,6 +904,12 @@ namespace WGClanIconDownload
                 }
             }
             start_button.Enabled = false;
+        }
+
+        public void programQuit(object sender, EventArgs e)
+        {
+            Utils.appendLog("User command: exit application");
+            Application.Exit();
         }
     }
 }
