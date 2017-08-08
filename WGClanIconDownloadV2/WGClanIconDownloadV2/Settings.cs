@@ -33,6 +33,7 @@ namespace WGClanIconDownload
             "wot","portal","wowp"
         };
         public static int viaUiThreadsAllowed = 10;
+        public static bool downloadPause = false;
 
         public static List<ClassDataArray> fillDataArray()
         {
@@ -142,6 +143,11 @@ namespace WGClanIconDownload
     {
         public const int limitApiPageRequest = 100;
         public const int INVALID_HANDLE_VALUE = -1;
+        public const string start_button_text_start = "Start";
+        public const string start_button_text_pause = "Pause";
+        public const string start_button_text_resume = "Resume";
+        public const string cancel_button_text_cancel = "Cancel";
+        public const string cancel_button_text_quit = "Quit";
 
         public const UInt32 ERROR_SHARING_VIOLATION = 0x80070020;               /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
         public const int WS_EX_TRANSPARENT = 0x20;

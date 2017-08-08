@@ -66,6 +66,33 @@ namespace WGClanIconDownload
 
         private void start_button_Click(object sender, EventArgs e)
         {
+            if (start_button.Text.Equals(Constants.start_button_text_start))
+                create_UiElementsAndWorker(sender, e);
+            else if (start_button.Text.Equals(Constants.start_button_text_pause))
+                downloadPause(sender, e);
+            else if (start_button.Text.Equals(Constants.start_button_text_resume))
+                downloadResume(sender, e);
+            else
+                MessageBox.Show("Function not recogniced", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void downloadPause(object sender, EventArgs e)
+        {
+            Message_richTextBox.AppendText("all downloads will be paused\n");
+            start_button.Text = Constants.start_button_text_resume;
+            Settings.downloadPause = true;
+        }
+
+        private void downloadResume(object sender, EventArgs e)
+        {
+            if (UiUpdateWorker != sender)
+                Message_richTextBox.AppendText("all downloads will be started again\n");
+            start_button.Text = Constants.start_button_text_pause;
+            Settings.downloadPause = false;
+        }
+
+        private void create_UiElementsAndWorker(object sender, EventArgs e)
+        {
             try
             {
                 if (checkedListBoxRegion.Items.Count > 0)
@@ -109,10 +136,10 @@ namespace WGClanIconDownload
                         int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
                         this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + (t + (overallTickLabel.Visible ? 1 : 0)) * 32 + checkedListBoxRegion.Top;  /// set the new Height of the Mainform
                     }
-                    // start_button.Enabled = true;
                     cancel_button.Enabled = true;
+                    cancel_button.Text = Constants.cancel_button_text_cancel;
                     checkedListBoxRegion.Enabled = false;
-                    start_button.Text = "Pause";
+                    start_button.Text = Constants.start_button_text_pause;
 
                     UiUpdateWorker = new BackgroundWorker();
                     UiUpdateWorker.DoWork += new DoWorkEventHandler(UiUpdateWorker_DoWork);
@@ -203,6 +230,11 @@ namespace WGClanIconDownload
 
         private void regionHandleWorker_Start(object sender, downloadThreadArgsParameter parameters)
         {
+            while (Settings.downloadPause)
+            {
+                Thread.Sleep(100);
+            }
+
             lock (_locker)
             {
                 try
@@ -232,6 +264,11 @@ namespace WGClanIconDownload
                 dataArray[parameters.indexOfDataArray].dlIconsThreads = Constants.INVALID_HANDLE_VALUE;
                 while (!dataArray[parameters.indexOfDataArray].dlIconsReady)
                 {
+                    while (Settings.downloadPause)
+                    {
+                        Thread.Sleep(100);
+                    }
+
                     lock (_locker)
                     {
                         if (dataArray[parameters.indexOfDataArray].dlIconsThreads == Constants.INVALID_HANDLE_VALUE) { dataArray[parameters.indexOfDataArray].dlIconsThreads = 0; };
@@ -351,9 +388,10 @@ namespace WGClanIconDownload
         {
             try
             {
+                downloadResume(sender, null);               // if this function is called (even with at a user pause event) the complete download is already finished, so it must be cleared
                 setMainformSmallHeight();
                 checkedListBoxRegion.Enabled = true;
-                start_button.Text = "Start";
+                start_button.Text = Constants.start_button_text_start;
                 start_button.Enabled = true;
                 cancel_button.Enabled = false;
 
@@ -440,6 +478,11 @@ namespace WGClanIconDownload
 
         void downloadThreadHandler_DoWork(object sender, downloadThreadArgsParameter parameters)
         {
+            while (Settings.downloadPause)
+            {
+                Thread.Sleep(100);
+            }
+
             lock (_locker)
             {
                 string emblems = "";
@@ -583,13 +626,18 @@ namespace WGClanIconDownload
 
         void apiRequestWorker_start(object sender, EventArgsParameter parameters)
         {
+            while (Settings.downloadPause)
+            {
+                Thread.Sleep(100);
+            }
+
             lock (_locker)
             {
                 try
                 {
                     BackgroundWorker apiRequestWorker = new BackgroundWorker();
                     apiRequestWorker.DoWork += new DoWorkEventHandler(apiRequestWorker_DoWork);
-                    apiRequestWorker.ProgressChanged += new ProgressChangedEventHandler(apiRequestWorker_ProgressChanged);
+                    // apiRequestWorker.ProgressChanged += new ProgressChangedEventHandler(apiRequestWorker_ProgressChanged);
                     apiRequestWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(apiRequestWorker_RunWorkerCompleted);
                     apiRequestWorker.WorkerReportsProgress = false;
                     apiRequestWorker.WorkerSupportsCancellation = true;
@@ -631,9 +679,9 @@ namespace WGClanIconDownload
             }
         }
 
-        void apiRequestWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-        }
+        // void apiRequestWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        // {
+        // }
 
         void apiRequestWorker_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
@@ -750,7 +798,7 @@ namespace WGClanIconDownload
                     if (worker != null)
                     {
                         worker.DoWork -= apiRequestWorker_DoWork;
-                        worker.ProgressChanged -= apiRequestWorker_ProgressChanged;
+                        // worker.ProgressChanged -= apiRequestWorker_ProgressChanged;
                         worker.RunWorkerCompleted -= apiRequestWorker_RunWorkerCompleted;
                         worker.Dispose();
                     }
