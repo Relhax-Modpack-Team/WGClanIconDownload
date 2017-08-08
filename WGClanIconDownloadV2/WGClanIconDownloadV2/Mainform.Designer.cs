@@ -53,7 +53,7 @@
             this.start_button.Name = "start_button";
             this.start_button.Size = new System.Drawing.Size(97, 26);
             this.start_button.TabIndex = 0;
-            this.start_button.Text = "start";
+            this.start_button.Text = "Start";
             this.start_button.UseVisualStyleBackColor = true;
             this.start_button.Click += new System.EventHandler(this.start_button_Click);
             // 
@@ -173,7 +173,7 @@
             this.cancel_button.Name = "cancel_button";
             this.cancel_button.Size = new System.Drawing.Size(97, 26);
             this.cancel_button.TabIndex = 10;
-            this.cancel_button.Text = "cancel";
+            this.cancel_button.Text = "Cancel";
             this.cancel_button.UseVisualStyleBackColor = true;
             // 
             // regionThreadsLabel_toolTip

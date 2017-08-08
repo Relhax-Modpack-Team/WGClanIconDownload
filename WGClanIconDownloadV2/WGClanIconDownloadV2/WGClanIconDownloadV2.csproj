@@ -63,7 +63,7 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>maintenance.ico</ApplicationIcon>
+    <ApplicationIcon>maintenance_transparent.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
@@ -141,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="maintenance.ico" />
+    <Content Include="maintenance_transparent.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

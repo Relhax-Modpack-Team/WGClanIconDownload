@@ -81,8 +81,6 @@ namespace WGClanIconDownload
                             //The start button is disabled as soon as the background operation is started
                             //The Cancel button is enabled so that the user can stop the operation 
                             //at any point of time during the execution
-                            start_button.Enabled = false;
-                            checkedListBoxRegion.Enabled = false;
                             /// https://stackoverflow.com/questions/10694271/c-sharp-multiple-backgroundworkers 
                             /// Create a background worker thread that ReportsProgress &
                             /// SupportsCancellation
@@ -111,6 +109,11 @@ namespace WGClanIconDownload
                         int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
                         this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + (t + (overallTickLabel.Visible ? 1 : 0)) * 32 + checkedListBoxRegion.Top;  /// set the new Height of the Mainform
                     }
+                    // start_button.Enabled = true;
+                    cancel_button.Enabled = true;
+                    checkedListBoxRegion.Enabled = false;
+                    start_button.Text = "Pause";
+
                     UiUpdateWorker = new BackgroundWorker();
                     UiUpdateWorker.DoWork += new DoWorkEventHandler(UiUpdateWorker_DoWork);
                     UiUpdateWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(UiUpdateWorker_RunWorkerCompleted);
@@ -350,7 +353,9 @@ namespace WGClanIconDownload
             {
                 setMainformSmallHeight();
                 checkedListBoxRegion.Enabled = true;
+                start_button.Text = "Start";
                 start_button.Enabled = true;
+                cancel_button.Enabled = false;
 
                 UiUpdateWorker.Dispose();
                 TickCounterWorker.Dispose();
