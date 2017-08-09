@@ -89,7 +89,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Base64 Newtonsoft.Json.dll.cs" />
     <Compile Include="TransparentLabel.cs">
       <SubType>Component</SubType>
     </Compile>
