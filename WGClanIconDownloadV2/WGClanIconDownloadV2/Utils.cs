@@ -148,6 +148,43 @@ namespace WGClanIconDownload
             // Format and display the TimeSpan value. (elapsedTime)
             return String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds);
         }
+
+        /// <summary>
+        /// https://stackoverflow.com/questions/16387904/how-to-catch-404-webexception-for-webclient-downloadfileasync
+        /// </summary>
+        /// <param name="err">e.error</param>
+        /// <returns></returns>
+        public static HttpStatusCode GetHttpStatusCode(System.Exception err)
+        {
+            if (err is WebException)
+            {
+                WebException we = (WebException)err;
+                if (we.Response is HttpWebResponse)
+                {
+                    HttpWebResponse response = (HttpWebResponse)we.Response;
+                    return response.StatusCode;
+                }
+                else
+                {
+                    Utils.appendLog("we.Data: "+we.Data);
+                    dumpObjectToLog("we.Data: ", we.Data);
+                    dumpObjectToLog("key: ",we.Data.Keys);
+                    Utils.appendLog("we.HelpLink: " + we.HelpLink);
+                    Utils.appendLog("we.HResult: " + we.HResult);
+                        Utils.appendLog("we.InnerException: " + we.InnerException);
+                        Utils.appendLog("we.Message: " + we.Message);
+                        Utils.appendLog("we.Response: " + we.Response);
+                        Utils.appendLog("we.Source: " + we.Source);
+                        Utils.appendLog("we.Status: " + we.Status);
+                        Utils.appendLog("we.TargetSite: " + we.TargetSite);
+                    dumpObjectToLog("TargetSite: ", we.TargetSite);
+                }
+                Utils.appendLog("GetHttpStatusCode: err.ToString()" + we.ToString());
+            }
+            Utils.appendLog("GetHttpStatusCode: we.Respons()" + err.ToString());
+
+            return 0;
+        }
     }
 
     /// <summary>

@@ -22,7 +22,8 @@ namespace WGClanIconDownload
         /// <param {1}="wgAppID"></param>
         /// <param {2}="limit"></param>
         /// <param {3}="page"></param>
-        public static string wgApiURL = @"https://api.{0}/wgn/clans/list/?application_id={1}&fields=-emblems.x195,-emblems.x24,-emblems.x256,-emblems.x64,-created_at,-color,-clan_id,-members_count,-name&game=wot&limit={2}&page_no={3}";
+        public static string wgApiURL = @"https://www.{0}/wgn/clans/list/?application_id={1}&fields=-emblems.x195,-emblems.x24,-emblems.x256,-emblems.x64,-created_at,-color,-clan_id,-members_count,-name&game=wot&limit={2}&page_no={3}";
+        // public static string wgApiURL = @"https://api.{0}/wgn/clans/list/?application_id={1}&fields=-emblems.x195,-emblems.x24,-emblems.x256,-emblems.x64,-created_at,-color,-clan_id,-members_count,-name&game=wot&limit={2}&page_no={3}";
         public static string[] prohibitedFilenames = new string[] {
             "CON","PRN","AUX","CLOCK$","NUL","COM0","COM1","COM2","COM3","COM4","COM5","COM6","COM7","COM8","COM9","LPT0","LPT1","LPT2","LPT3","LPT4","LPT5","LPT6","LPT7","LPT8","LPT9"
         };
@@ -153,6 +154,8 @@ namespace WGClanIconDownload
 
         public const UInt32 ERROR_SHARING_VIOLATION = 0x80070020;               /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
         public const int WS_EX_TRANSPARENT = 0x20;
+        public const int HTTP_QUERY_STATUS_CODE = 0x13;
+        // public const int HTTP_STATUS_OK = 0xC8;  => HttpStatusCode.OK
     }
 
     public class EventArgsParameter : IDisposable
@@ -160,6 +163,7 @@ namespace WGClanIconDownload
         public string region { get; set; } = null;
         public int indexOfDataArray { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public int apiRequestWorkerThread { get; set; } = Constants.INVALID_HANDLE_VALUE;
+        public int currentPage { get; set; } = Constants.INVALID_HANDLE_VALUE;
         public AwesomeWebClient WebClient { get; set; } = new AwesomeWebClient();
         [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
         public void Dispose()  // Follow the Dispose pattern - public nonvirtual.

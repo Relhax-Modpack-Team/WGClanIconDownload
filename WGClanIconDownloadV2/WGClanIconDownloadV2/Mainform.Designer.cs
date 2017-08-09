@@ -88,7 +88,7 @@
             // 
             this.Message_richTextBox.Location = new System.Drawing.Point(24, 97);
             this.Message_richTextBox.Name = "Message_richTextBox";
-            this.Message_richTextBox.Size = new System.Drawing.Size(447, 111);
+            this.Message_richTextBox.Size = new System.Drawing.Size(447, 114);
             this.Message_richTextBox.TabIndex = 4;
             this.Message_richTextBox.Text = "";
             this.Message_richTextBox.TextChanged += new System.EventHandler(this.Message_richTextBox_TextChanged);

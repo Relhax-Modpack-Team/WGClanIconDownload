@@ -613,12 +613,18 @@ namespace WGClanIconDownload
                                 WebException we = (WebException)e.Error.GetBaseException();
                                 if (we.Status == WebExceptionStatus.ProtocolError)
                                 {
-                                    Utils.appendLog(string.Format("Error: WebException at downloadThreadHandler_DownloadFileCompleted ({0})\nStatus: {1}  Description: {2}\nlast URL: {3}", parameters.region, Utils.IntToHex((int)we.Status), ((HttpWebResponse)we.Response).StatusDescription, parameters.lastUsedUrl));
+                                    string error = new System.IO.StreamReader(we.Response.GetResponseStream()).ReadToEnd();
+                                    Utils.appendLog(error);
+                                    Utils.appendLog(string.Format("Error: WebException at downloadThreadHandler_DownloadFileCompleted ({0})\nStatus: {1}  Description: {2}  URL: {3}", parameters.region, Utils.IntToHex((int)we.Status), ((HttpWebResponse)we.Response).StatusDescription, parameters.lastUsedUrl));
                                 }
                                 else
                                 {
                                     Utils.appendLog("Error: WebException at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + ") Status: " + e.Error.ToString());
                                 }
+                            }
+                            else if (e.Error.GetBaseException() is IOException)
+                            {
+                                Utils.appendLog("IOException at downloadThreadHandler_DownloadFileCompleted (" + parameters.region + ") Status: " + e.Error.ToString());
                             }
                             else
                             {
@@ -711,6 +717,11 @@ namespace WGClanIconDownload
 
         void apiRequestWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            apiRequestWorker_DoWork(sender, e, false);
+        }
+
+        void apiRequestWorker_DoWork(object sender, DoWorkEventArgs e, bool reload)
+        {
             lock (_locker)
             {
                 try
@@ -719,9 +730,17 @@ namespace WGClanIconDownload
                     var region = parameters.region;
                     var indexOfDataArray = parameters.indexOfDataArray;
                     var apiRequestWorkerThread = parameters.apiRequestWorkerThread;
-
-                    int currentPage = dataArray[indexOfDataArray].currentPage;
-                    dataArray[indexOfDataArray].currentPage++;
+                    int currentPage = 0;
+                    if (!reload)
+                    {
+                        currentPage = dataArray[indexOfDataArray].currentPage;
+                        parameters.currentPage = currentPage;
+                        dataArray[indexOfDataArray].currentPage++;
+                    }
+                    else
+                    {
+                        currentPage = parameters.currentPage;
+                    }
                     string url = string.Format(Settings.wgApiURL, dataArray[indexOfDataArray].url, Settings.wgAppID, Constants.limitApiPageRequest, currentPage);
                     //Handle the event for download complete
                     parameters.WebClient = new AwesomeWebClient();
