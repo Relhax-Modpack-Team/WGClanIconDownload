@@ -50,17 +50,10 @@ namespace WGClanIconDownload
 
             checkedListBoxRegion.Items.Clear();
             // durchlaufe alle Regionen
-            foreach (var item in dataArray)
+            foreach (var r in dataArray)
             {
                 // Schreibe die möglichen Regionen in die ChecklistBox
-                checkedListBoxRegion.Items.Add(item.region);
-                string fold = Path.Combine(Settings.baseStorageFolder, item.storagePath);
-                // prüfe ob ein entsprechendes Downloadverzeichnis bereits angelegt ist
-                if (!Directory.Exists(fold))
-                {
-                    Directory.CreateDirectory(fold);
-                    Utils.appendLog("Directory created => " + fold);
-                }
+                checkedListBoxRegion.Items.Add(r.region);
             }
         }
 
@@ -148,15 +141,24 @@ namespace WGClanIconDownload
                                 pushParameters.indexOfDataArray = parameters.indexOfDataArray;
                                 Utils.appendLog("apiRequest RunWorkerAsync thread region: " + parameters.region + " thread: " + x + " started");
                             }
+                            // erstelle den kompletten Pfad der Downloadordner
+                            string fold = Path.Combine(Settings.baseStorageFolder, dataArray[pushParameters.indexOfDataArray].storagePath);
+                            // prüfe ob ein entsprechendes Downloadverzeichnis bereits angelegt ist
+                            if (!Directory.Exists(fold))
+                            {
+                                Directory.CreateDirectory(fold);
+                                Utils.appendLog("Directory created => " + fold);
+                            }
                             dataArray[pushParameters.indexOfDataArray].stopWatch.Start();           /// start stopwatch
                             regionHandleWorker_initializeStart(sender, pushParameters);
                             create_dynamicElements(pushParameters, t);
                             t++;
                         }
-                        int borderWidth = (this.Width - ClientSize.Width) / 2;
-                        int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
-                        this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + (t + (overallTickLabel.Visible ? 1 : 0)) * 32 + checkedListBoxRegion.Top;  /// set the new Height of the Mainform
                     }
+                    int borderWidth = (this.Width - ClientSize.Width) / 2;
+                    int titlebarHeight = this.Height - this.ClientSize.Height - 2 * borderWidth;
+                    this.Height = titlebarHeight + 2 * borderWidth + Message_richTextBox.Top + Message_richTextBox.Height + (t + (overallTickLabel.Visible ? 1 : 0)) * 32 + checkedListBoxRegion.Top;  /// set the new Height of the Mainform
+
                     cancel_button.Text = Constants.cancel_button_text_cancel;
                     checkedListBoxRegion.Enabled = false;
                     start_button.Text = Constants.start_button_text_pause;
@@ -187,19 +189,27 @@ namespace WGClanIconDownload
 
         public void create_dynamicElements(downloadThreadArgsParameter parameters, int t)
         {
+            dataArray[parameters.indexOfDataArray].regionNameLabel = new System.Windows.Forms.Label();
+            dataArray[parameters.indexOfDataArray].regionNameLabel.AutoSize = true;
+            dataArray[parameters.indexOfDataArray].regionNameLabel.Location = new System.Drawing.Point(24, 217 + t * 32);
+            dataArray[parameters.indexOfDataArray].regionNameLabel.Size = new System.Drawing.Size(35, 13);
+            dataArray[parameters.indexOfDataArray].regionNameLabel.Text = parameters.region;
+            dataArray[parameters.indexOfDataArray].regionNameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Controls.Add(dataArray[parameters.indexOfDataArray].regionNameLabel);
+
             dataArray[parameters.indexOfDataArray].customProgressBar = new ProgressBarWithCaptionVista();
             dataArray[parameters.indexOfDataArray].customProgressBar.Size = new System.Drawing.Size(217, 19);
             dataArray[parameters.indexOfDataArray].customProgressBar.Maximum = 1;
             dataArray[parameters.indexOfDataArray].customProgressBar.Minimum = 0;
-            dataArray[parameters.indexOfDataArray].customProgressBar.Location = new System.Drawing.Point(24, 216 + t * 32);
+            dataArray[parameters.indexOfDataArray].customProgressBar.Location = new System.Drawing.Point(65, dataArray[parameters.indexOfDataArray].regionNameLabel.Top-1);         /// 24
             dataArray[parameters.indexOfDataArray].customProgressBar.Visible = true;
             dataArray[parameters.indexOfDataArray].customProgressBar.DisplayStyle = ProgressBarDisplayText.CustomText;
-            dataArray[parameters.indexOfDataArray].customProgressBar.CustomText = parameters.region;
+            dataArray[parameters.indexOfDataArray].customProgressBar.CustomText = "";
             this.Controls.Add(dataArray[parameters.indexOfDataArray].customProgressBar);
 
             dataArray[parameters.indexOfDataArray].regionThreadsLabel = new System.Windows.Forms.Label();
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.AutoSize = true;
-            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Location = new System.Drawing.Point(260, dataArray[parameters.indexOfDataArray].customProgressBar.Top + 1);
+            dataArray[parameters.indexOfDataArray].regionThreadsLabel.Location = new System.Drawing.Point(291, dataArray[parameters.indexOfDataArray].regionNameLabel.Top);       /// 260
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.Size = new System.Drawing.Size(35, 13);
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.Text = "0";
             dataArray[parameters.indexOfDataArray].regionThreadsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -207,7 +217,7 @@ namespace WGClanIconDownload
 
             dataArray[parameters.indexOfDataArray].dlTicksLabel = new System.Windows.Forms.Label();
             dataArray[parameters.indexOfDataArray].dlTicksLabel.AutoSize = true;
-            dataArray[parameters.indexOfDataArray].dlTicksLabel.Location = new System.Drawing.Point(295, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top);
+            dataArray[parameters.indexOfDataArray].dlTicksLabel.Location = new System.Drawing.Point(331, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top); /// 295
             dataArray[parameters.indexOfDataArray].dlTicksLabel.Size = new System.Drawing.Size(35, 13);
             dataArray[parameters.indexOfDataArray].dlTicksLabel.Text = "";
             dataArray[parameters.indexOfDataArray].dlTicksLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -216,17 +226,17 @@ namespace WGClanIconDownload
             dataArray[parameters.indexOfDataArray].iconPreview = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(dataArray[parameters.indexOfDataArray].iconPreview)).BeginInit();
             dataArray[parameters.indexOfDataArray].iconPreview.AccessibleRole = System.Windows.Forms.AccessibleRole.Cursor;
-            dataArray[parameters.indexOfDataArray].iconPreview.Location = new System.Drawing.Point(439, 211 + t * 32);
+            dataArray[parameters.indexOfDataArray].iconPreview.Location = new System.Drawing.Point(439, 211 + t * 32);              /// 439
             dataArray[parameters.indexOfDataArray].iconPreview.Margin = new System.Windows.Forms.Padding(0);
             dataArray[parameters.indexOfDataArray].iconPreview.Name = "iconPreview";
             dataArray[parameters.indexOfDataArray].iconPreview.Size = new System.Drawing.Size(32, 32);
             dataArray[parameters.indexOfDataArray].iconPreview.TabStop = false;
             this.Controls.Add(dataArray[parameters.indexOfDataArray].iconPreview);
 
-            overallTickLabel.Location = new System.Drawing.Point(281, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top + 32);
+            overallTickLabel.Location = new System.Drawing.Point(dataArray[parameters.indexOfDataArray].dlTicksLabel.Left - 14, dataArray[parameters.indexOfDataArray].regionThreadsLabel.Top + 32);
             overallTickLabel.Visible = (t > 0);
 
-            separatorBevelLineLabel.Location = new System.Drawing.Point(281, overallTickLabel.Top - 3);
+            separatorBevelLineLabel.Location = new System.Drawing.Point(overallTickLabel.Left, overallTickLabel.Top - 3);
             separatorBevelLineLabel.Visible = overallTickLabel.Visible;
         }
 
@@ -463,6 +473,9 @@ namespace WGClanIconDownload
                         this.Controls.Remove(r.regionThreadsLabel);
                         this.Controls.Remove(r.iconPreview);
                         this.Controls.Remove(r.dlTicksLabel);
+                        if (r.regionNameLabel != null)
+                            r.regionNameLabel.Dispose();
+                        r.regionNameLabel = new Label();
                         if (r.customProgressBar != null)
                             r.customProgressBar.Dispose();
                         r.customProgressBar = new ProgressBarWithCaptionVista();
@@ -613,8 +626,6 @@ namespace WGClanIconDownload
                                 WebException we = (WebException)e.Error.GetBaseException();
                                 if (we.Status == WebExceptionStatus.ProtocolError)
                                 {
-                                    string error = new System.IO.StreamReader(we.Response.GetResponseStream()).ReadToEnd();
-                                    Utils.appendLog(error);
                                     Utils.appendLog(string.Format("Error: WebException at downloadThreadHandler_DownloadFileCompleted ({0})\nStatus: {1}  Description: {2}  URL: {3}", parameters.region, Utils.IntToHex((int)we.Status), ((HttpWebResponse)we.Response).StatusDescription, parameters.lastUsedUrl));
                                 }
                                 else

@@ -106,9 +106,20 @@ namespace WGClanIconDownload
             try { if (e.Data != null) Utils.dumpObjectToLog("Data", e.Data); } catch { };             /// https://msdn.microsoft.com/de-de/library/system.exception.data(v=vs.110).aspx
         }
 
-        public static string IntToHex(int i)                    /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
+        public static string IntToHex(int i)
         {
-            return "0x"+i.ToString("X4");
+            return IntToHex(i, 4);
+        }
+
+        /// <summary>
+        /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
+        /// </summary>
+        /// <param name="i">number to be converted</param>
+        /// <param name="x">How many places should have the hex string at least</param>
+        /// <returns></returns>
+        public static string IntToHex(int i,int x)
+        {
+            return "0x"+i.ToString("X"+x);
         }
 
         public static Int32 HexToInt(string s)                  /// https://stackoverflow.com/questions/1139957/c-sharp-convert-integer-to-hex-and-back-again
@@ -120,22 +131,6 @@ namespace WGClanIconDownload
         {
             Type genericListType = typeof(List<>).MakeGenericType(myType);
             return (IList)Activator.CreateInstance(genericListType);
-        }
-
-        public bool createFileFromBase64String(string filename, string base64)
-        {
-            // byte[] data = Convert.FromBase64String(base64);
-            // string decodedString = Encoding.UTF8.GetString(data);
-            try
-            {
-                File.WriteAllBytes(filename, Convert.FromBase64String(base64));
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Utils.exceptionLog("createFileFromBase64String", ex);
-                return false;
-            }
         }
 
         /// <summary>
@@ -171,12 +166,12 @@ namespace WGClanIconDownload
                     dumpObjectToLog("key: ",we.Data.Keys);
                     Utils.appendLog("we.HelpLink: " + we.HelpLink);
                     Utils.appendLog("we.HResult: " + we.HResult);
-                        Utils.appendLog("we.InnerException: " + we.InnerException);
-                        Utils.appendLog("we.Message: " + we.Message);
-                        Utils.appendLog("we.Response: " + we.Response);
-                        Utils.appendLog("we.Source: " + we.Source);
-                        Utils.appendLog("we.Status: " + we.Status);
-                        Utils.appendLog("we.TargetSite: " + we.TargetSite);
+                    Utils.appendLog("we.InnerException: " + we.InnerException);
+                    Utils.appendLog("we.Message: " + we.Message);
+                    Utils.appendLog("we.Response: " + we.Response);
+                    Utils.appendLog("we.Source: " + we.Source);
+                    Utils.appendLog("we.Status: " + we.Status);
+                    Utils.appendLog("we.TargetSite: " + we.TargetSite);
                     dumpObjectToLog("TargetSite: ", we.TargetSite);
                 }
                 Utils.appendLog("GetHttpStatusCode: err.ToString()" + we.ToString());

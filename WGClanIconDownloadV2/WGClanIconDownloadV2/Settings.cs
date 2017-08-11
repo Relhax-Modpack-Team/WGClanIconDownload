@@ -22,8 +22,7 @@ namespace WGClanIconDownload
         /// <param {1}="wgAppID"></param>
         /// <param {2}="limit"></param>
         /// <param {3}="page"></param>
-        public static string wgApiURL = @"https://www.{0}/wgn/clans/list/?application_id={1}&fields=-emblems.x195,-emblems.x24,-emblems.x256,-emblems.x64,-created_at,-color,-clan_id,-members_count,-name&game=wot&limit={2}&page_no={3}";
-        // public static string wgApiURL = @"https://api.{0}/wgn/clans/list/?application_id={1}&fields=-emblems.x195,-emblems.x24,-emblems.x256,-emblems.x64,-created_at,-color,-clan_id,-members_count,-name&game=wot&limit={2}&page_no={3}";
+        public static string wgApiURL = @"https://api.{0}/wgn/clans/list/?application_id={1}&fields=-emblems.x195,-emblems.x24,-emblems.x256,-emblems.x64,-created_at,-color,-clan_id,-members_count,-name&game=wot&limit={2}&page_no={3}";
         public static string[] prohibitedFilenames = new string[] {
             "CON","PRN","AUX","CLOCK$","NUL","COM0","COM1","COM2","COM3","COM4","COM5","COM6","COM7","COM8","COM9","LPT0","LPT1","LPT2","LPT3","LPT4","LPT5","LPT6","LPT7","LPT8","LPT9"
         };
@@ -135,6 +134,7 @@ namespace WGClanIconDownload
         /// </summary>
         public Stopwatch stopWatch = new Stopwatch();
         public List<clanData> clans = new List<clanData>();
+        public Label regionNameLabel = new Label();
         public ProgressBarWithCaptionVista customProgressBar = new ProgressBarWithCaptionVista();
         public Label regionThreadsLabel = new Label();
         public Label dlTicksLabel = new Label();
