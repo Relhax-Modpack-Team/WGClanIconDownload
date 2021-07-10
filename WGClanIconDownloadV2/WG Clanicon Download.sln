@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31424.327
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WG Clanicon Download", "WGClanIconDownloadV2\WG Clanicon Download.csproj", "{10A681BA-5C89-4BE3-8580-9A93C5F040D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoTClanIconDownloadConsole", "..\WoTClanIconDownloadConsole\WoTClanIconDownloadConsole.csproj", "{CE4F9E2B-C2F1-4F88-A28F-352BE423B0FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{10A681BA-5C89-4BE3-8580-9A93C5F040D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10A681BA-5C89-4BE3-8580-9A93C5F040D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10A681BA-5C89-4BE3-8580-9A93C5F040D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE4F9E2B-C2F1-4F88-A28F-352BE423B0FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE4F9E2B-C2F1-4F88-A28F-352BE423B0FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE4F9E2B-C2F1-4F88-A28F-352BE423B0FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE4F9E2B-C2F1-4F88-A28F-352BE423B0FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E2C63A2C-69F9-443B-87EB-78D782BFDC93}
 	EndGlobalSection
 EndGlobal
