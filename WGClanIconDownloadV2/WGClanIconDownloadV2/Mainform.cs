@@ -247,10 +247,10 @@ namespace WGClanIconDownload
                 System.Threading.Timer timer = null;                                // delay 3000 ms https://stackoverflow.com/questions/545533/delayed-function-calls
                 timer = new System.Threading.Timer((obj) =>
                     {
-                        regionHandleWorker_Start(sender, parameters);
                         timer.Dispose();
                     },
                         null, 500, System.Threading.Timeout.Infinite);
+                regionHandleWorker_Start(sender, parameters);
             }
             catch (Exception ex)
             {
@@ -401,12 +401,14 @@ namespace WGClanIconDownload
                         }
                         if (r.total > 0)
                         {
+                            /*
                             int countIconDownload = r.countIconDownload;
                             r.customProgressBar.CustomText = string.Format("{0}/{1} ({2})", countIconDownload, r.total, r.clans.Count().ToString());
                             r.customProgressBar.Maximum = r.total;
                             if (r.customProgressBar.Maximum < countIconDownload) { r.customProgressBar.Maximum = countIconDownload; };
                             r.customProgressBar.Value = countIconDownload;
                             r.regionThreadsLabel.Text = r.dlIconsThreads.ToString();
+                            */
                         }
                         if (Settings.downloadCancel && r.dlApiDataReady == true && !r.regionFinishedMsgDone)
                         {
@@ -514,15 +516,15 @@ namespace WGClanIconDownload
                         int lastTick = r.dlTickBuffer;
                         r.dlTickBuffer = r.countIconDownload;
                         i = r.dlTickBuffer - lastTick;
-                        r.dlTicksLabel.Text = "dl/sec: " + (i).ToString();
+                        //r.dlTicksLabel.Text = "dl/sec: " + (i).ToString();
                         t += i;
                     }
-                    this.overallTickLabel.Text = s + " dl/sec: " + t;
+                    //this.overallTickLabel.Text = s + " dl/sec: " + t;
                     if (!(t == 0 && avgBuffer.Count == 0))
                     {
                         avgBuffer.Add(t);
                         while (avgBuffer.Count > 10) { avgBuffer.RemoveAt(0); };        // max 60 sec buffer
-                        avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgBuffer.Sum() / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
+                        //avgOverTimeTicksLabel.Text = d + " dl/sec: " + (avgBuffer.Sum() / avgBuffer.Count) + " (" + avgBuffer.Count + " sec)";
                     }
                     Thread.Sleep(1000);
                 }
