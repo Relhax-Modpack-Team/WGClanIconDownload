@@ -16,6 +16,8 @@ namespace WoTClanIconDownloadConsole
 
         public List<Region> RegionsToDownload { get; set; }
 
+        public bool DebugMode { get; set; } = false;
+
         private string[] CommandLineArgs = null;
 
         private string[] RegionsString;
@@ -56,6 +58,13 @@ namespace WoTClanIconDownloadConsole
 
                 switch (commandArg)
                 {
+                    case "debugMode":
+                        if (bool.TryParse(CommandLineArgs[++i], out bool debugModeResult))
+                        {
+                            DebugMode = debugModeResult;
+                            Console.WriteLine("/{0}, debug mode set to {1}", commandArg, DebugMode);
+                        }
+                        break;
                     case "apiLoadLimit":
                         ApiLoadLimitString = CommandLineArgs[++i];
                         if (int.TryParse(ApiLoadLimitString, out int result))
