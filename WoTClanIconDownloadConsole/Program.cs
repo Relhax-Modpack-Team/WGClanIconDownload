@@ -23,8 +23,7 @@ namespace WoTClanIconDownloadConsole
             parser.ParseCommandLineSwitches();
             if (parser.RegionsToDownload == null || parser.RegionsToDownload.Count == 0)
             {
-                Console.WriteLine("No regions to download");
-                Environment.Exit((int)ApplicationExitCode.NoRegionsSpecified);
+                Utils.HandleError("No regions to download", parser.DebugMode, ApplicationExitCode.NoRegionsSpecified);
                 return;
             }
         }

@@ -68,8 +68,7 @@ namespace WoTClanIconDownloadConsole
             JValue result = root.SelectToken("status") as JValue;
             if (result == null)
             {
-                Console.WriteLine("Failed to parse the json api response (no status property)");
-                Environment.Exit((int)ApplicationExitCode.FailedToParseApi);
+                Utils.HandleError("Failed to parse the json api response (no status property)", CommandLineParser.DebugMode, ApplicationExitCode.FailedToParseApi);
                 return;
             }
 
@@ -78,16 +77,14 @@ namespace WoTClanIconDownloadConsole
 
             if (!apiResult.Equals(Constants.WgApiResultOk))
             {
-                Console.WriteLine("Failed to parse the json api response (result was not ok)");
-                Environment.Exit((int)ApplicationExitCode.FailedToParseApi);
+                Utils.HandleError("Failed to parse the json api response (result was not ok)", CommandLineParser.DebugMode, ApplicationExitCode.FailedToParseApi);
                 return;
             }
 
             JValue totalIconsJValue = (root.SelectToken("meta.total") as JValue);
             if (totalIconsJValue == null)
             {
-                Console.WriteLine("Failed to parse the json api response (no meta/total property)");
-                Environment.Exit((int)ApplicationExitCode.FailedToParseApi);
+                Utils.HandleError("Failed to parse the json api response (no meta/total property)", CommandLineParser.DebugMode, ApplicationExitCode.FailedToParseApi);
                 return;
             }
 
@@ -115,8 +112,7 @@ namespace WoTClanIconDownloadConsole
                 JArray dataJArray = root.SelectToken("data") as JArray;
                 if (dataJArray == null)
                 {
-                    Console.WriteLine("Failed to parse the json api response (failed on page {0})", CurrentPage);
-                    Environment.Exit((int)ApplicationExitCode.FailedToParseApi);
+                    Utils.HandleError(string.Format("Failed to parse the json api response (failed on page {0})", CurrentPage), CommandLineParser.DebugMode, ApplicationExitCode.FailedToParseApi);
                     return;
                 }
 
@@ -140,6 +136,7 @@ namespace WoTClanIconDownloadConsole
         {
             if (Directory.Exists(DownloadFolder))
             {
+                Console.WriteLine("Deleting old directory");
                 Directory.Delete(DownloadFolder, true);
             }
             Directory.CreateDirectory(DownloadFolder);
@@ -154,16 +151,16 @@ namespace WoTClanIconDownloadConsole
             }
             catch (WebException ex)
             {
-                Console.WriteLine(ex.ToString());
                 DisposeClient();
-                Environment.Exit((int)ApplicationExitCode.FailedToDownloadImages);
+                Utils.HandleException(ex, CommandLineParser.DebugMode, ApplicationExitCode.FailedToDownloadImages);
                 return;
             }
         }
 
         private JObject GetJsonObjectFromWgApi(string url)
         {
-            Console.WriteLine("Downloading api data at url {0}", url);
+            if (CommandLineParser.DebugMode)
+                Console.WriteLine("Downloading api data at url {0}", url);
 
             string jsonString;
             try
@@ -172,9 +169,8 @@ namespace WoTClanIconDownloadConsole
             }
             catch (WebException ex)
             {
-                Console.WriteLine(ex.ToString());
                 DisposeClient();
-                Environment.Exit((int)ApplicationExitCode.FailedToDownloadApi);
+                Utils.HandleException(ex, CommandLineParser.DebugMode, ApplicationExitCode.FailedToDownloadApi);
                 return null;
             }
 
@@ -185,9 +181,8 @@ namespace WoTClanIconDownloadConsole
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
                 DisposeClient();
-                Environment.Exit((int)ApplicationExitCode.FailedToParseApi);
+                Utils.HandleException(ex, CommandLineParser.DebugMode, ApplicationExitCode.FailedToParseApi);
                 return null;
             }
 
