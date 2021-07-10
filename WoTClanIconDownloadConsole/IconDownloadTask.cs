@@ -54,6 +54,7 @@ namespace WoTClanIconDownloadConsole
         {
             this.Region = region;
             this.CommandLineParser = commandLineParser;
+            this.client.ConcurrentConnections = CommandLineParser.ConcurrentConnectionsPerRegion;
         }
 
         public void GetTotalIconsPages()
