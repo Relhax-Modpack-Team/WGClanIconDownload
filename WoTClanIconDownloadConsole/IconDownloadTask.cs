@@ -282,6 +282,7 @@ namespace WoTClanIconDownloadConsole
         {
             while (true)
             {
+                int retry;
                 if (IconStructs.Count == 0 && pageLoadersDone)
                 {
                     return;
@@ -299,30 +300,45 @@ namespace WoTClanIconDownloadConsole
                     CurrentIconCount++;
                 }
 
-                try
+                for (retry = 1; retry < 4; retry++)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (!CommandLineParser.Quiet || (CommandLineParser.Quiet && CurrentIconCount % 100 == 0))
-                        Console.WriteLine("Downloading icon {0} of {1}: {2}", CurrentIconCount, TotalIcons, Path.GetFileName(iconStruct.DownloadPath));
-                    
-                    if (!Directory.Exists(DownloadFolder))
+                    try
                     {
-                        Directory.CreateDirectory(DownloadFolder);
-                    }
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (!CommandLineParser.Quiet || (CommandLineParser.Quiet && CurrentIconCount % 100 == 0))
+                            Console.WriteLine("Downloading icon {0} of {1}: {2}", CurrentIconCount, TotalIcons, Path.GetFileName(iconStruct.DownloadPath));
 
-                    if (CommandLineParser.DebugMode)
+                        if (!Directory.Exists(DownloadFolder))
+                        {
+                            Directory.CreateDirectory(DownloadFolder);
+                        }
+
+                        if (CommandLineParser.DebugMode)
+                        {
+                            Console.WriteLine("Download url:  {0}, {1}Download path: {2}", iconStruct.DownloadUrl, Environment.NewLine, iconStruct.DownloadPath);
+                        }
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        client.DownloadFile(iconStruct.DownloadUrl, iconStruct.DownloadPath);
+                        cancellationToken.ThrowIfCancellationRequested();
+                        retry = 4;
+                    }
+                    catch (OperationCanceledException ex)
                     {
-                        Console.WriteLine("Download url:  {0}, {1}Download path: {2}", iconStruct.DownloadUrl, Environment.NewLine, iconStruct.DownloadPath);
+                        pageLoadersDone = true;
+                        HandleException(ex, ApplicationExitCode.FailedToDownloadImages, tokenSource);
+                        return;
                     }
-
-                    client.DownloadFile(iconStruct.DownloadUrl, iconStruct.DownloadPath);
-                    cancellationToken.ThrowIfCancellationRequested();
+                    catch (Exception)
+                    {
+                        Console.WriteLine("Download of icon {0} failed, retry {1} of 3...", Path.GetFileName(iconStruct.DownloadPath), retry);
+                        Thread.Sleep(500);
+                    }
                 }
-                catch (Exception ex)
+
+                if (retry != 5)
                 {
-                    pageLoadersDone = true;
-                    HandleException(ex, ApplicationExitCode.FailedToDownloadImages, tokenSource);
-                    return;
+                    Console.WriteLine("Download of icon {0} failed", Path.GetFileName(iconStruct.DownloadPath));
                 }
             }
         }
