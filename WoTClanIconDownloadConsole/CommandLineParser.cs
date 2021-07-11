@@ -68,6 +68,7 @@ namespace WoTClanIconDownloadConsole
                         Quiet = true;
                         Console.WriteLine("/{0}, quiet mode set to {1}", commandArg, DebugMode);
                         break;
+
                     case "debug":
                         DebugMode = true;
                         Quiet = false;
