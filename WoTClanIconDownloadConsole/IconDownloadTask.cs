@@ -21,8 +21,6 @@ namespace WoTClanIconDownloadConsole
 
     public class IconDownloadTask
     {
-        public List<IconDownloadTask> IconDownloadTasks;
-
         public CommandLineParser CommandLineParser;
 
         public Region Region { get; set; }
