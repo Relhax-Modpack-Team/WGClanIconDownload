@@ -41,7 +41,7 @@ namespace WoTClanIconDownloadConsole
 
         private object lockerObject = new object();
 
-        private AutoResetEvent resetEvent;
+        private AutoResetEvent iconDownloadWaitEvent;
 
         public CancellationTokenSource tokenSource;
 
@@ -129,6 +129,16 @@ namespace WoTClanIconDownloadConsole
 
             StartIconDownloadThreads();
             RunPageLoaders();
+
+            //wait for the icon download threads to be done
+            try
+            {
+                Task.WaitAll(iconDownloaderTasks);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         #region api requests
@@ -169,7 +179,7 @@ namespace WoTClanIconDownloadConsole
                     subStatusTracker = 0;
                     for (int j = 0; j < CommandLineParser.ConcurrentApiRequestsPerRegion; j++)
                     {
-                        resetEvent.Set();
+                        iconDownloadWaitEvent.Set();
                     }
                 }
             }
@@ -258,7 +268,7 @@ namespace WoTClanIconDownloadConsole
         {
             iconDownloaderTasks = new Task[CommandLineParser.ConcurrentConnectionsPerRegion];
             iconDownloaderClients = new ConcurrentWebClient[CommandLineParser.ConcurrentConnectionsPerRegion];
-            resetEvent = new AutoResetEvent(false);
+            iconDownloadWaitEvent = new AutoResetEvent(false);
             ServicePointManager.DefaultConnectionLimit = CommandLineParser.ConcurrentConnectionsPerRegion;
             for (int i = 0; i < iconDownloaderTasks.Count(); i++)
             {
@@ -287,7 +297,7 @@ namespace WoTClanIconDownloadConsole
                 }
                 else if (IconStructs.Count == 0)
                 {
-                    resetEvent.WaitOne();
+                    iconDownloadWaitEvent.WaitOne();
                 }
 
                 IconStruct iconStruct;
