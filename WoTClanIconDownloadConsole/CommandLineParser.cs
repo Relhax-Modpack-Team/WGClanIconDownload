@@ -14,9 +14,13 @@ namespace WoTClanIconDownloadConsole
 
         public int ConcurrentConnectionsPerRegion { get; set; } = Constants.DefaultConcurrentConnectionsPerRegion;
 
+        public int ConcurrentApiRequestsPerRegion { get; set; } = Constants.DefaultApiRequestsPerRegion;
+
         public List<Region> RegionsToDownload { get; set; }
 
         public bool DebugMode { get; set; } = false;
+
+        public bool Quiet { get; set; } = false;
 
         private string[] CommandLineArgs = null;
 
@@ -27,6 +31,8 @@ namespace WoTClanIconDownloadConsole
         private string _IconFolderStructure;
 
         private string ConcurrentConnectionsPerRegionString;
+
+        private string ConcurrentApiRequestsPerRegionString;
 
         /// <summary>
         /// Creates an instance of the CommandLineParser class
@@ -41,7 +47,7 @@ namespace WoTClanIconDownloadConsole
         /// <summary>
         /// Parse the command line arguments
         /// </summary>
-        public void ParseCommandLineSwitches()
+        public ApplicationExitCode ParseCommandLineSwitches()
         {
             if (CommandLineArgs == null)
                 throw new ArgumentNullException("CommandLineArgs is null");
@@ -58,13 +64,17 @@ namespace WoTClanIconDownloadConsole
 
                 switch (commandArg)
                 {
-                    case "debugMode":
-                        if (bool.TryParse(CommandLineArgs[++i], out bool debugModeResult))
-                        {
-                            DebugMode = debugModeResult;
-                            Console.WriteLine("/{0}, debug mode set to {1}", commandArg, DebugMode);
-                        }
+                    case "quiet":
+                        Quiet = true;
+                        Console.WriteLine("/{0}, quiet mode set to {1}", commandArg, DebugMode);
                         break;
+                    case "debug":
+                        DebugMode = true;
+                        Quiet = false;
+                        Console.WriteLine("/{0}, debug mode set to {1}", commandArg, DebugMode);
+                        Console.WriteLine("NOTE: this sets quiet to false");
+                        break;
+
                     case "apiLoadLimit":
                         ApiLoadLimitString = CommandLineArgs[++i];
                         if (int.TryParse(ApiLoadLimitString, out int result))
@@ -72,8 +82,7 @@ namespace WoTClanIconDownloadConsole
                             if (100 < result || result < 1)
                             {
                                 Console.WriteLine("ERROR: apiLoadLimit must be between 1 and 100");
-                                Environment.Exit((int)ApplicationExitCode.InvalidCmdArg);
-                                return;
+                                return ApplicationExitCode.InvalidCmdArg;
                             }
                             ApiLoadLimit = result;
                         }
@@ -84,15 +93,29 @@ namespace WoTClanIconDownloadConsole
                         ConcurrentConnectionsPerRegionString = CommandLineArgs[++i];
                         if (int.TryParse(ConcurrentConnectionsPerRegionString, out int result_))
                         {
-                            if (40 < result_ || result_ < 1)
+                            if (50 < result_ || result_ < 1)
                             {
-                                Console.WriteLine("ERROR: concurrentConnectionsPerRegion must be between 1 and 40");
+                                Console.WriteLine("ERROR: concurrentConnectionsPerRegion must be between 1 and 50");
                                 Environment.Exit((int)ApplicationExitCode.InvalidCmdArg);
-                                return;
+                                return ApplicationExitCode.InvalidCmdArg;
                             }
                             ConcurrentConnectionsPerRegion = result_;
                         }
-                        Console.WriteLine("/{0}, concurrent connections per region downloaders set to {1}", commandArg, ConcurrentConnectionsPerRegion);
+                        Console.WriteLine("/{0}, concurrent connections per region set to {1}", commandArg, ConcurrentConnectionsPerRegion);
+                        break;
+
+                    case "concurrentApiRequestsPerRegion":
+                        ConcurrentApiRequestsPerRegionString = CommandLineArgs[++i];
+                        if (int.TryParse(ConcurrentApiRequestsPerRegionString, out int _result_))
+                        {
+                            if (5 < _result_ || _result_ < 1)
+                            {
+                                Console.WriteLine("ERROR: concurrentApiRequestsPerRegion must be between 1 and 5");
+                                return ApplicationExitCode.InvalidCmdArg;
+                            }
+                            ConcurrentApiRequestsPerRegion = _result_;
+                        }
+                        Console.WriteLine("/{0}, concurrent api requests per region set to {1}", commandArg, ConcurrentApiRequestsPerRegion);
                         break;
 
                     case "iconFolderStructure":
@@ -101,8 +124,7 @@ namespace WoTClanIconDownloadConsole
                         if (!_IconFolderStructure.Contains(@"{region}"))
                         {
                             Console.WriteLine("ERROR: iconFolderStructure must contain the macro {region}");
-                            Environment.Exit((int)ApplicationExitCode.InvalidCmdArg);
-                            return;
+                            return ApplicationExitCode.InvalidCmdArg;
                         }
                         Console.WriteLine("/{0}, icon folder directory structure set to {1}", _IconFolderStructure);
                         IconFolderStructure = _IconFolderStructure;
@@ -113,8 +135,7 @@ namespace WoTClanIconDownloadConsole
                         if (RegionsString.Count() == 0)
                         {
                             Console.WriteLine("ERROR: no regions specified in the arg regionsToDownload (count 0)");
-                            Environment.Exit((int)ApplicationExitCode.NoRegionsSpecified);
-                            return;
+                            return ApplicationExitCode.NoRegionsSpecified;
                         }
 
                         RegionsString = RegionsString.Distinct().ToArray();
@@ -138,8 +159,7 @@ namespace WoTClanIconDownloadConsole
                                     break;
                                 default:
                                     Console.WriteLine("ERROR: region {0} is not a valid region. Valid regions: na, eu, ru, asia");
-                                    Environment.Exit((int)ApplicationExitCode.InvalidCmdArg);
-                                    return;
+                                    return ApplicationExitCode.InvalidCmdArg;
                             }
                         }
 
@@ -153,6 +173,7 @@ namespace WoTClanIconDownloadConsole
                         break;
                 }
             }
+            return ApplicationExitCode.NoError;
         }
     }
 }

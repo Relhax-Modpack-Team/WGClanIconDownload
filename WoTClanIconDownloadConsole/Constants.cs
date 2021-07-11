@@ -20,7 +20,9 @@ namespace WoTClanIconDownloadConsole
 
         public const string DefaultIconFolderStructure = @"download\{region}\res_mods\mods\shared_resources\xvm\res\clanicons\{region}\clan";
 
-        public const int DefaultConcurrentConnectionsPerRegion = 2;
+        public const int DefaultConcurrentConnectionsPerRegion = 5;
+
+        public const int DefaultApiRequestsPerRegion = 2;
 
         /// <summary>
         /// The Startup root path of the application. Does not include the application name

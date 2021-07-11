@@ -28,31 +28,5 @@ namespace WoTClanIconDownloadConsole
                 }
             };
         }
-
-        public static void HandleException(Exception ex, bool debugMode, ApplicationExitCode exitCode)
-        {
-            Console.WriteLine(ex.ToString());
-
-            HandleClose(debugMode, exitCode);  
-        }
-
-        public static void HandleError(string message, bool debugMode, ApplicationExitCode exitCode)
-        {
-            Console.WriteLine(message);
-
-            HandleClose(debugMode, exitCode);
-        }
-
-        public static void HandleClose(bool debugMode, ApplicationExitCode exitCode)
-        {
-            if (debugMode)
-            {
-                Console.WriteLine("Press enter to exit, or the application will time out in 5 seconds");
-                Task[] tasks = new Task[] { Task.Run(() => Console.ReadLine()) };
-                Task.WaitAny(tasks, 5000);
-            }
-
-            Environment.Exit((int)exitCode);
-        }
     }
 }
